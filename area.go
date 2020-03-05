@@ -5,9 +5,7 @@ import (
 
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
-	"github.com/SlothNinja/restful"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 type AreaID int
@@ -419,46 +417,84 @@ func (g *Game) areasAdjacentTo(a *Area) Areas {
 	return areas
 }
 
-func (g *Game) adminSumerArea(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminSumerArea(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	a := g.SelectedArea()
-	na := g.newArea(a.ID, 0)
-	if err = restful.BindWith(c, na, binding.FormPost); err != nil {
-		act = game.None
-	} else if err = restful.BindWith(c, na.City, binding.FormPost); err != nil {
-		act = game.None
-	} else {
-		log.Debugf("na: %#v", na)
-		log.Debugf("na.City: %#v", na.City)
-		a.Armies = na.Armies
-		a.ArmyOwnerID = na.ArmyOwnerID
-		a.City.Expanded = na.City.Expanded
-		a.City.Built = na.City.Built
-		a.City.OwnerID = na.City.OwnerID
-		act = game.Save
+	// 	na := g.newArea(a.ID, 0)
+	na := struct {
+		Armies      int  `form:"armies"`
+		ArmyOwnerID int  `form:"army-owner-id"`
+		Built       bool `form:"city-built"`
+		Expanded    bool `form:"city-expanded"`
+		OwnerID     int  `form:"city-owner-id"`
+	}{}
+
+	err := c.ShouldBind(&na)
+	if err != nil {
+		return "", game.None, err
 	}
-	return
+
+	log.Debugf("na: %#v", na)
+	a.Armies = na.Armies
+	a.ArmyOwnerID = na.ArmyOwnerID
+	a.City.Expanded = na.Expanded
+	a.City.Built = na.Built
+	a.City.OwnerID = na.OwnerID
+	return "", game.Save, nil
+
+	// if err = restful.BindWith(c, na, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else if err = restful.BindWith(c, na.City, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else {
+	// 	log.Debugf("na: %#v", na)
+	// 	log.Debugf("na.City: %#v", na.City)
+	// 	a.Armies = na.Armies
+	// 	a.ArmyOwnerID = na.ArmyOwnerID
+	// 	a.City.Expanded = na.City.Expanded
+	// 	a.City.Built = na.City.Built
+	// 	a.City.OwnerID = na.City.OwnerID
+	// 	act = game.Save
+	// }
+	// return
 }
 
-func (g *Game) adminNonSumerArea(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminNonSumerArea(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	a := g.SelectedArea()
-	na := g.newArea(a.ID, 0)
-	if err = restful.BindWith(c, na, binding.FormPost); err != nil {
-		act = game.None
-	} else {
-		log.Debugf("na: %#v", na)
-		a.Armies = na.Armies
-		a.Workers = na.Workers
-		a.ArmyOwnerID = na.ArmyOwnerID
-		a.Trade = na.Trade
-		act = game.Save
+	na := struct {
+		Workers     Workers   `form:"workers"`
+		Armies      int       `form:"armies"`
+		ArmyOwnerID int       `form:"army-owner-id"`
+		Trade       Resources `form:"trade"`
+	}{}
+
+	err := c.ShouldBind(&na)
+	if err != nil {
+		return "", game.None, err
 	}
-	return
+	log.Debugf("na: %#v", na)
+	a.Armies = na.Armies
+	a.Workers = na.Workers
+	a.ArmyOwnerID = na.ArmyOwnerID
+	a.Trade = na.Trade
+	return "", game.Save, nil
+	// na := g.newArea(a.ID, 0)
+	// if err = restful.BindWith(c, na, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else {
+	// 	log.Debugf("na: %#v", na)
+	// 	a.Armies = na.Armies
+	// 	a.Workers = na.Workers
+	// 	a.ArmyOwnerID = na.ArmyOwnerID
+	// 	a.Trade = na.Trade
+	// 	act = game.Save
+	// }
+	// return
 }
 
 type sslice []string
@@ -472,20 +508,32 @@ func (ss sslice) include(s string) bool {
 	return false
 }
 
-func (g *Game) adminWorkerBox(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminWorkerBox(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	a := g.SelectedArea()
-	na := g.newArea(a.ID, 0)
-	if err = restful.BindWith(c, na, binding.FormPost); err != nil {
-		act = game.None
-	} else {
-		log.Debugf("na: %#v", na)
-		a.Workers = na.Workers
-		act = game.Save
+	na := struct {
+		Workers Workers `form:"workers"`
+	}{}
+
+	err := c.ShouldBind(&na)
+	if err != nil {
+		return "", game.None, err
 	}
-	return
+
+	log.Debugf("na: %#v", na)
+	a.Workers = na.Workers
+	return "", game.Save, nil
+	// na := g.newArea(a.ID, 0)
+	// if err = restful.BindWith(c, na, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else {
+	// 	log.Debugf("na: %#v", na)
+	// 	a.Workers = na.Workers
+	// 	act = game.Save
+	// }
+	// return
 }
 
 func (g *Game) UsedToolMakerArea() *Area {

@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"html/template"
+	"time"
 
 	"github.com/SlothNinja/color"
 	"github.com/SlothNinja/game"
@@ -12,7 +13,6 @@ import (
 	"github.com/SlothNinja/sn"
 	gtype "github.com/SlothNinja/type"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 func init() {
@@ -311,21 +311,32 @@ func (g *Game) CurrentPlayer() *Player {
 	return nil
 }
 
-func (g *Game) adminSupplyTable(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminSupplyTable(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	ns := new(State)
+	ns := struct {
+		Resources Resources `form:"resources"`
+	}{}
 	ns.Resources = Resources{0, 9, 9, 0, 9, 4, 4, 7}
-	if err = restful.BindWith(c, ns, binding.FormPost); err != nil {
-		act = game.None
-	} else {
-		log.Debugf("ns: %#v", ns)
-
-		g.Resources = ns.Resources
-		act = game.Save
+	err := c.ShouldBind(&ns)
+	if err != nil {
+		return "", game.None, err
 	}
-	return
+	g.Resources = ns.Resources
+	return "", game.Save, nil
+
+	// ns := new(State)
+	// ns.Resources = Resources{0, 9, 9, 0, 9, 4, 4, 7}
+	// if err = restful.BindWith(c, ns, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else {
+	// 	log.Debugf("ns: %#v", ns)
+
+	// 	g.Resources = ns.Resources
+	// 	act = game.Save
+	// }
+	// return
 }
 
 func (g *Game) SelectedPlayer() *Player {
@@ -351,15 +362,45 @@ func (g *Game) anyPassed() bool {
 	return g.Players()[0].Passed || g.Players()[1].Passed || g.Players()[2].Passed
 }
 
-func (g *Game) adminHeader(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	h := game.NewHeader(c, nil, 0)
-	if err = restful.BindWith(c, h, binding.FormPost); err != nil {
-		act = game.None
-		return
+	h := struct {
+		Title         string           `form:"title"`
+		Turn          int              `form:"turn" binding:"min=0"`
+		Phase         game.Phase       `form:"phase" binding:"min=0"`
+		SubPhase      game.SubPhase    `form:"sub-phase" binding:"min=0"`
+		Round         int              `form:"round" binding:"min=0"`
+		NumPlayers    int              `form:"num-players" binding"min=0,max=5"`
+		Password      string           `form:"password"`
+		CreatorID     int64            `form:"creator-id"`
+		CreatorSID    string           `form:"creator-sid"`
+		CreatorName   string           `form:"creator-name"`
+		UserIDS       []int64          `form:"user-ids"`
+		UserSIDS      []string         `form:"user-sids"`
+		UserNames     []string         `form:"user-names"`
+		UserEmails    []string         `form:"user-emails"`
+		OrderIDS      game.UserIndices `form:"order-ids"`
+		CPUserIndices game.UserIndices `form:"cp-user-indices"`
+		WinnerIDS     game.UserIndices `form:"winner-ids"`
+		Status        game.Status      `form:"status"`
+		Progress      string           `form:"progress"`
+		Options       []string         `form:"options"`
+		OptString     string           `form:"opt-string"`
+		CreatedAt     time.Time        `form:"created-at"`
+		UpdatedAt     time.Time        `form:"updated-at"`
+	}{}
+
+	err := c.ShouldBind(&h)
+	if err != nil {
+		return "", game.None, err
 	}
+	// h := game.NewHeader(c, nil, 0)
+	// if err = restful.BindWith(c, h, binding.FormPost); err != nil {
+	// 	act = game.None
+	// 	return
+	// }
 
 	log.Debugf("h: %#v", h)
 	g.Title = h.Title
@@ -375,7 +416,6 @@ func (g *Game) adminHeader(c *gin.Context) (tmpl string, act game.ActionType, er
 	g.CPUserIndices = h.CPUserIndices
 	g.WinnerIDS = h.WinnerIDS
 	g.Status = h.Status
-	act = game.Save
 	game.WithAdmin(c, true)
-	return
+	return "", game.Save, nil
 }

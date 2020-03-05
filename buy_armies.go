@@ -10,7 +10,6 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 func init() {
@@ -64,10 +63,19 @@ func (g *Game) validateBuyArmies(c *gin.Context) (resources Resources, bought in
 		return
 	}
 
-	rs := new(armyResources)
-	if err = restful.BindWith(c, rs, binding.FormPost); err != nil {
-		return
+	rs := struct {
+		Grain int `form:"grain"`
+		Metal int `form:"metal"`
+		Tool  int `form:"tool"`
+	}{}
+	err = c.ShouldBind(&rs)
+	if err != nil {
+		return nil, 0, err
 	}
+	// rs := new(armyResources)
+	// if err = restful.BindWith(c, rs, binding.FormPost); err != nil {
+	// 	return
+	// }
 
 	resources = make(Resources, 8)
 	resources[Grain] = rs.Grain

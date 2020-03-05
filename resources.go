@@ -3,9 +3,7 @@ package atf
 import (
 	"strings"
 
-	"github.com/SlothNinja/restful"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 type Resource int
@@ -184,10 +182,26 @@ func (g *Game) TradesFor(i int) Resources {
 }
 
 func getResourcesFrom(c *gin.Context) (Resources, error) {
-	rs := new(rs)
-	if err := restful.BindWith(c, rs, binding.FormPost); err != nil {
+	rs := struct {
+		Grain   int `form:"grain"`
+		Wood    int `form:"wood"`
+		Metal   int `form:"metal"`
+		Textile int `form:"textile"`
+		Tool    int `form:"tool"`
+		Oil     int `form:"oil"`
+		Gold    int `form:"gold"`
+		Lapis   int `form:"lapis"`
+	}{}
+
+	err := c.ShouldBind(&rs)
+	if err != nil {
 		return nil, err
 	}
+
+	// rs := new(rs)
+	// if err := restful.BindWith(c, rs, binding.FormPost); err != nil {
+	// 	return nil, err
+	// }
 
 	resources := make(Resources, 8)
 	resources[Grain] = rs.Grain

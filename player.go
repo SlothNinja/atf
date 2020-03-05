@@ -14,7 +14,6 @@ import (
 	"github.com/SlothNinja/sn"
 	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 func init() {
@@ -762,36 +761,59 @@ func (p *Player) hasAvailableTradersIn(a *Area) bool {
 	return p.availableTradersIn(a) > 0
 }
 
-func (g *Game) adminPlayer(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) adminPlayer(c *gin.Context) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	p := g.SelectedPlayer()
-	np := newPlayer()
+	//np := newPlayer()
+	np := struct {
+		IDF             int       `form:"idf"`
+		PerformedAction bool      `form:"performed-action"`
+		Score           int       `form:"score"`
+		Passed          bool      `form:"passed"`
+		Resources       Resources `form:"resources"`
+		City            int       `form:"city"`
+		Expansion       int       `form:"expansion"`
+		Worker          int       `form:"worker"`
+		WorkerSupply    int       `form:"worker-supply"`
+		Army            int       `form:"army"`
+		ArmySupply      int       `form:"army-supply"`
+		PassedResources Resources `form:"passed-resources"`
+		PaidActionCost  bool      `form:"paid-action-cost"`
+		UsedSippar      bool      `form:"used-sippar"`
+		VPPassed        bool      `form:"vp-passed"`
+	}{}
 
-	if err = restful.BindWith(c, np, binding.FormPost); err != nil {
-		act = game.None
-	} else if err = restful.BindWith(c, np.Player, binding.FormPost); err != nil {
-		act = game.None
-	} else {
-		log.Debugf("np: %#v", np)
-
-		p.Army = np.Army
-		p.ArmySupply = np.ArmySupply
-		p.Worker = np.Worker
-		p.WorkerSupply = np.WorkerSupply
-		p.City = np.City
-		p.Expansion = np.Expansion
-		p.Resources = np.Resources
-		p.Passed = np.Passed
-		p.VPPassed = np.VPPassed
-		p.PerformedAction = np.PerformedAction
-		p.Score = np.Score
-		p.PassedResources = np.PassedResources
-		p.PaidActionCost = np.PaidActionCost
-		act = game.Save
+	err := c.ShouldBind(&np)
+	if err != nil {
+		return "", game.None, err
 	}
-	return
+
+	// if err = restful.BindWith(c, np, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else if err = restful.BindWith(c, np.Player, binding.FormPost); err != nil {
+	// 	act = game.None
+	// } else {
+	log.Debugf("np: %#v", np)
+
+	p.Army = np.Army
+	p.ArmySupply = np.ArmySupply
+	p.Worker = np.Worker
+	p.WorkerSupply = np.WorkerSupply
+	p.City = np.City
+	p.Expansion = np.Expansion
+	p.Resources = np.Resources
+	p.Passed = np.Passed
+	p.VPPassed = np.VPPassed
+	p.PerformedAction = np.PerformedAction
+	p.Score = np.Score
+	p.PassedResources = np.PassedResources
+	p.PaidActionCost = np.PaidActionCost
+	return "", game.Save, nil
+	//	act = game.Save
+	// }
+	// return
 
 }
 
