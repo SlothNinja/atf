@@ -1,6 +1,7 @@
 module github.com/SlothNinja/atf
 
 require (
+	cloud.google.com/go v0.54.0 // indirect
 	cloud.google.com/go/datastore v1.1.0
 	github.com/SlothNinja/codec v0.0.0-20200229214548-e3da7deddffb
 	github.com/SlothNinja/color v0.0.0-20200229192705-407f9b576df3
