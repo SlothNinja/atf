@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
@@ -96,12 +97,14 @@ func (g *Game) actionsPhaseFinishTurn(c *gin.Context) error {
 		g.orderOfPlay(c)
 		g.scoreEmpires(c)
 		if completed := g.expandCityPhase(c); !completed {
-			return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+			s = s.GetUpdate(c, time.Time(g.UpdatedAt))
+			return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
+			// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
 		}
 
 		if g.Turn == 5 {
-			es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
-			return g.save(c, es...)
+			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
+			return g.saveWith(c, ks, es)
 		} else {
 			g.endOfTurn(c)
 			g.startTurn(c)
@@ -118,7 +121,9 @@ func (g *Game) actionsPhaseFinishTurn(c *gin.Context) error {
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
 
-	return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+	s = s.GetUpdate(c, time.Time(g.UpdatedAt))
+	return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
+	// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
 }
 
 func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
@@ -174,8 +179,8 @@ func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) error {
 	if np != nil {
 		g.setCurrentPlayers(np)
 	} else if g.Turn == 5 {
-		es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
-		return g.save(c, es...)
+		ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
+		return g.saveWith(c, ks, es)
 	} else {
 		g.endOfTurn(c)
 		g.startTurn(c)
@@ -186,7 +191,9 @@ func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) error {
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
 
-	return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+	s = s.GetUpdate(c, time.Time(g.UpdatedAt))
+	return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
+	// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
 }
 
 func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
