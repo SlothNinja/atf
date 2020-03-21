@@ -12,6 +12,7 @@ import (
 	"github.com/SlothNinja/contest"
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
+	"github.com/SlothNinja/memcache"
 	"github.com/SlothNinja/mlog"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
@@ -19,8 +20,6 @@ import (
 	"github.com/SlothNinja/user"
 	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/memcache"
 )
 
 const (
@@ -182,7 +181,7 @@ func Update(prefix string) gin.HandlerFunc {
 				return
 			}
 			item.Value = v
-			if err = memcache.Set(appengine.NewContext(c.Request), item); err != nil {
+			if err = memcache.Set(c, item); err != nil {
 				log.Errorf("memcache.Set error: %s", err)
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 				return
@@ -195,7 +194,7 @@ func Update(prefix string) gin.HandlerFunc {
 			}
 		case actionType == game.Undo:
 			mkey := g.UndoKey(c)
-			if err := memcache.Delete(appengine.NewContext(c.Request), mkey); err != nil && err != memcache.ErrCacheMiss {
+			if err := memcache.Delete(c, mkey); err != nil && err != memcache.ErrCacheMiss {
 				log.Errorf("memcache.Delete error: %s", err)
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 				return
@@ -420,7 +419,7 @@ func mcGet(c *gin.Context, g *Game) error {
 	defer log.Debugf("Exiting")
 
 	mkey := g.GetHeader().UndoKey(c)
-	item, err := memcache.Get(appengine.NewContext(c.Request), mkey)
+	item, err := memcache.Get(c, mkey)
 	if err != nil {
 		return err
 	}
@@ -666,7 +665,7 @@ func (g *Game) save(c *gin.Context) error {
 			return err
 		}
 
-		err = memcache.Delete(appengine.NewContext(c.Request), g.UndoKey(c))
+		err = memcache.Delete(c, g.UndoKey(c))
 		if err == memcache.ErrCacheMiss {
 			return nil
 		}
@@ -705,7 +704,7 @@ func (g *Game) saveWith(c *gin.Context, ks []*datastore.Key, es []interface{}) e
 			return err
 		}
 
-		err = memcache.Delete(appengine.NewContext(c.Request), g.UndoKey(c))
+		err = memcache.Delete(c, g.UndoKey(c))
 		if err == memcache.ErrCacheMiss {
 			return nil
 		}
@@ -858,7 +857,7 @@ func Undo(prefix string) gin.HandlerFunc {
 			return
 		}
 		mkey := g.UndoKey(c)
-		if err := memcache.Delete(appengine.NewContext(c.Request), mkey); err != nil && err != memcache.ErrCacheMiss {
+		if err := memcache.Delete(c, mkey); err != nil && err != memcache.ErrCacheMiss {
 			log.Errorf("memcache.Delete error: %s", err)
 		}
 		restful.AddNoticef(c, "%s undid turn.", user.CurrentFrom(c))
