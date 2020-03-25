@@ -19,24 +19,12 @@ func init() {
 	gob.Register(new(setupEntry))
 	gob.Register(new(startEntry))
 	gob.Register(new(startTurnEntry))
-	//	gob.Register(new(Game))
-	//	game.Register(gType.ATF, newGamer, PhaseNames, nil)
 }
 
-//func Register(m *martini.Martini) {
-//func Register(r martini.Router) {
-//	gob.Register(new(Game))
-//	game.Register(gType.ATF, newGamer, PhaseNames, nil)
-//	AddRoutes(gType.ATF.Prefix(), r)
-//	//game.AddDefaultRoutes(gType.ATF.Prefix(), r)
-//	//m.Use(game.AddDefaultRoutes(gType.ATF.Prefix()))
-//}
-func Register(t gtype.Type, r *gin.Engine) {
-	//func Register(m *martini.Martini) {
+func (svr server) Register(t gtype.Type, r *gin.Engine) *gin.Engine {
 	gob.Register(new(Game))
 	game.Register(t, newGamer, PhaseNames, nil)
-	AddRoutes(t.Prefix(), r)
-	//m.Use(game.AddDefaultRoutes(gType.GOT.Prefix()))
+	return svr.addRoutes(t.Prefix(), r)
 }
 
 var ErrMustBeGame = errors.New("Resource must have type *Game.")

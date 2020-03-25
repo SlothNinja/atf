@@ -13,25 +13,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Finish(prefix string) gin.HandlerFunc {
+func (svr server) finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
-		defer c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+
+		var (
+			ks  []*datastore.Key
+			es  []interface{}
+			err error
+		)
 
 		g := gameFrom(c)
 		switch g.Phase {
 		case Actions:
-			if err := g.actionsPhaseFinishTurn(c); err != nil {
-				log.Errorf("g.actionsPhaseFinishTurn error: %v", err)
-				return
-			}
+			ks, es, err = g.actionsPhaseFinishTurn(c)
 		case ExpandCity:
-			if err := g.expandCityPhaseFinishTurn(c); err != nil {
-				log.Errorf("g.expandCityPhaseFinishTurn error: %v", err)
-				return
-			}
+			ks, es, err = g.expandCityPhaseFinishTurn(c)
+		}
 
+		if err != nil {
+			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
+		}
+		err = svr.saveWith(c, g, ks, es)
+		if err != nil {
+			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
 		}
 	}
 }
@@ -82,13 +94,13 @@ func (g *Game) actionPhaseNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (g *Game) actionsPhaseFinishTurn(c *gin.Context) error {
+func (g *Game) actionsPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	s, err := g.validateActionsPhaseFinishTurn(c)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	oldCP := g.CurrentPlayer()
@@ -97,14 +109,13 @@ func (g *Game) actionsPhaseFinishTurn(c *gin.Context) error {
 		g.orderOfPlay(c)
 		g.scoreEmpires(c)
 		if completed := g.expandCityPhase(c); !completed {
-			s = s.GetUpdate(c, time.Time(g.UpdatedAt))
-			return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
-			// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+			s = s.GetUpdate(c, g.UpdatedAt)
+			return []*datastore.Key{s.Key}, []interface{}{s}, nil
 		}
 
 		if g.Turn == 5 {
 			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
-			return g.saveWith(c, ks, es)
+			return ks, es, nil
 		} else {
 			g.endOfTurn(c)
 			g.startTurn(c)
@@ -116,14 +127,17 @@ func (g *Game) actionsPhaseFinishTurn(c *gin.Context) error {
 		}
 	}
 
-	if newCP := g.CurrentPlayer(); newCP != nil && oldCP.ID() != newCP.ID() {
-		g.SendTurnNotificationsTo(c, newCP)
+	newCP := g.CurrentPlayer()
+	if newCP != nil && oldCP.ID() != newCP.ID() {
+		err = g.SendTurnNotificationsTo(c, newCP)
+		if err != nil {
+			log.Warningf(err.Error())
+		}
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
 
-	s = s.GetUpdate(c, time.Time(g.UpdatedAt))
-	return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
-	// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+	s = s.GetUpdate(c, g.UpdatedAt)
+	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
 func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
@@ -158,13 +172,13 @@ func (g *Game) expandCityPhaseNextPlayer(pers ...game.Playerer) (p *Player) {
 	return
 }
 
-func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) error {
+func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	s, err := g.validateExpandCityPhaseFinishTurn(c)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	cp := g.CurrentPlayer()
@@ -180,20 +194,23 @@ func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) error {
 		g.setCurrentPlayers(np)
 	} else if g.Turn == 5 {
 		ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
-		return g.saveWith(c, ks, es)
+		return ks, es, nil
 	} else {
 		g.endOfTurn(c)
 		g.startTurn(c)
 	}
 
-	if newCP := g.CurrentPlayer(); newCP != nil && oldCP.ID() != newCP.ID() {
-		g.SendTurnNotificationsTo(c, newCP)
+	newCP := g.CurrentPlayer()
+	if newCP != nil && oldCP.ID() != newCP.ID() {
+		err = g.SendTurnNotificationsTo(c, newCP)
+		if err != nil {
+			log.Warningf(err.Error())
+		}
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
 
-	s = s.GetUpdate(c, time.Time(g.UpdatedAt))
-	return g.saveWith(c, []*datastore.Key{s.Key}, []interface{}{s})
-	// return g.save(c, s.GetUpdate(c, time.Time(g.UpdatedAt)))
+	s = s.GetUpdate(c, g.UpdatedAt)
+	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
 func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
