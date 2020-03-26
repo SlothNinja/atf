@@ -10,6 +10,7 @@ import (
 	"github.com/SlothNinja/contest"
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
+	"github.com/SlothNinja/rating"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	"github.com/SlothNinja/user"
@@ -24,6 +25,7 @@ func init() {
 type Player struct {
 	*game.Player
 	Log             game.GameLog
+	Rating          *rating.CurrentRating
 	Resources       Resources `form:"resources"`
 	City            int       `form:"city"`
 	Expansion       int       `form:"expansion"`
@@ -124,8 +126,8 @@ func (g *Game) determinePlaces(c *gin.Context) contest.Places {
 			result := &contest.Result{
 				GameID: g.ID(),
 				Type:   g.Type,
-				R:      p2.Rating().R,
-				RD:     p2.Rating().RD,
+				R:      p2.Rating.R,
+				RD:     p2.Rating.RD,
 			}
 			switch c := p1.compareByScore(p2); {
 			case i == j:
