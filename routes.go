@@ -128,7 +128,7 @@ func (svr server) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 		svr.update(prefix),
 	)
 
-	g.PUT("/:hid",
+	admin.PUT("/:hid",
 		svr.fetch,
 		game.SetAdmin(true),
 		svr.update(prefix),
