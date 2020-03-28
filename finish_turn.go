@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (svr server) finish(prefix string) gin.HandlerFunc {
+func (client Client) finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
@@ -38,7 +38,7 @@ func (svr server) finish(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
-		err = svr.saveWith(c, g, ks, es)
+		err = client.saveWith(c, g, ks, es)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
