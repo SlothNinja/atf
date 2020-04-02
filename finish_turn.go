@@ -27,9 +27,9 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		g := gameFrom(c)
 		switch g.Phase {
 		case Actions:
-			ks, es, err = g.actionsPhaseFinishTurn(c)
+			ks, es, err = client.actionsPhaseFinishTurn(c, g)
 		case ExpandCity:
-			ks, es, err = g.expandCityPhaseFinishTurn(c)
+			ks, es, err = client.expandCityPhaseFinishTurn(c, g)
 		}
 
 		if err != nil {
@@ -94,7 +94,7 @@ func (g *Game) actionPhaseNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (g *Game) actionsPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []interface{}, error) {
+func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -114,7 +114,11 @@ func (g *Game) actionsPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []inter
 		}
 
 		if g.Turn == 5 {
-			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
+			cs, err := client.endGameScoring(c, g)
+			if err != nil {
+				return nil, nil, err
+			}
+			ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), cs)
 			return ks, es, nil
 		} else {
 			g.endOfTurn(c)
@@ -172,7 +176,7 @@ func (g *Game) expandCityPhaseNextPlayer(pers ...game.Playerer) (p *Player) {
 	return
 }
 
-func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []interface{}, error) {
+func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -193,7 +197,11 @@ func (g *Game) expandCityPhaseFinishTurn(c *gin.Context) ([]*datastore.Key, []in
 	if np != nil {
 		g.setCurrentPlayers(np)
 	} else if g.Turn == 5 {
-		ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), g.endGameScoring(c))
+		cs, err := client.endGameScoring(c, g)
+		if err != nil {
+			return nil, nil, err
+		}
+		ks, es := wrap(s.GetUpdate(c, time.Time(g.UpdatedAt)), cs)
 		return ks, es, nil
 	} else {
 		g.endOfTurn(c)

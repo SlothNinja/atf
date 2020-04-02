@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/mlog"
+	"github.com/SlothNinja/rating"
 	gtype "github.com/SlothNinja/type"
 	"github.com/SlothNinja/user"
 	stats "github.com/SlothNinja/user-stats"
@@ -11,16 +12,20 @@ import (
 )
 
 type Client struct {
-	*datastore.Client
-	Stats stats.Client
-	MLog  mlog.Client
+	DS     *datastore.Client
+	Stats  stats.Client
+	MLog   mlog.Client
+	Game   game.Client
+	Rating rating.Client
 }
 
 func NewClient(dsClient *datastore.Client) Client {
 	return Client{
-		Client: dsClient,
+		DS:     dsClient,
 		Stats:  stats.NewClient(dsClient),
 		MLog:   mlog.NewClient(dsClient),
+		Game:   game.NewClient(dsClient),
+		Rating: rating.NewClient(dsClient),
 	}
 }
 
@@ -112,7 +117,7 @@ func (client Client) addRoutes(prefix string, engine *gin.Engine) *gin.Engine {
 	// JSON Data for Index
 	gs.POST("/:status/json",
 		gtype.SetTypes(),
-		game.GetFiltered(gtype.ATF),
+		client.Game.GetFiltered(gtype.ATF),
 		client.jsonIndexAction(prefix),
 	)
 

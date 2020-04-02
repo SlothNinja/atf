@@ -19,15 +19,18 @@ func init() {
 	gob.Register(new(announceTHWinnersEntry))
 }
 
-func (g *Game) endGame(c *gin.Context) contest.Contests {
+func (client Client) endGame(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	g.Phase = EndGame
-	places := g.determinePlaces(c)
+	places, err := client.determinePlaces(c, g)
+	if err != nil {
+		return nil, err
+	}
 	g.SetWinners(places[0])
 	g.newEndGameEntry()
-	return contest.GenContests(c, places)
+	return contest.GenContests(c, places), nil
 }
 
 type endGameEntry struct {

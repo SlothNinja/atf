@@ -16,7 +16,7 @@ func init() {
 
 type endGameScoringMap map[AreaID]int
 
-func (g *Game) endGameScoring(c *gin.Context) contest.Contests {
+func (client Client) endGameScoring(c *gin.Context, g *Game) (contest.Contests, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -32,7 +32,7 @@ func (g *Game) endGameScoring(c *gin.Context) contest.Contests {
 		}
 	}
 	g.newEndGameScoringEntry(m)
-	return g.endGame(c)
+	return client.endGame(c, g)
 }
 
 type endGameScoringEntry struct {
