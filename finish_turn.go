@@ -42,9 +42,9 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
-			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
+		c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 	}
 }
 
