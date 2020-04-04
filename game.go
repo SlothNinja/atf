@@ -36,8 +36,7 @@ type Game struct {
 	*State
 
 	// Non-persistent values
-	// They are memcached but ignored by datastore
-	// NewLog          sn.GameLog `datastore:"-"`
+	// They are cached but ignored by datastore
 	BuiltCityAreaID AreaID  `datastore:"-"`
 	PlacedWorkers   bool    `datastore:"-"`
 	From            string  `datastore:"-"`
@@ -56,35 +55,6 @@ type State struct {
 	MultiAction    MultiActionID
 	SelectedAreaID AreaID
 }
-
-//type Game struct {
-//	*game.Header
-//	*State
-//}
-//
-//type State struct {
-//	Playerers      game.Playerers
-//	Log            game.GameLog
-//	Resources      Resources
-//	Areas          Areas
-//	EmpireTable    EmpireTable
-//	Continue       bool
-//	MultiAction    MultiActionID
-//	SelectedAreaID AreaID
-//	*TempData
-//}
-//
-//// Non-persistent values
-//// They are memcached but ignored by datastore
-//// NewLog          sn.GameLog `datastore:"-"`
-//type TempData struct {
-//	BuiltCityAreaID AreaID
-//	PlacedWorkers   bool
-//	From            string
-//	To              string
-//	OtherPlayer     *Player
-//	ExpandedCity    bool
-//}
 
 func (g *Game) GetPlayerers() game.Playerers {
 	return g.Playerers
@@ -313,18 +283,6 @@ func (g *Game) adminSupplyTable(c *gin.Context) (string, game.ActionType, error)
 	}
 	g.Resources = ns.Resources
 	return "", game.Save, nil
-
-	// ns := new(State)
-	// ns.Resources = Resources{0, 9, 9, 0, 9, 4, 4, 7}
-	// if err = restful.BindWith(c, ns, binding.FormPost); err != nil {
-	// 	act = game.None
-	// } else {
-	// 	log.Debugf("ns: %#v", ns)
-
-	// 	g.Resources = ns.Resources
-	// 	act = game.Save
-	// }
-	// return
 }
 
 func (g *Game) SelectedPlayer() *Player {
@@ -384,11 +342,6 @@ func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
 	if err != nil {
 		return "", game.None, err
 	}
-	// h := game.NewHeader(c, nil, 0)
-	// if err = restful.BindWith(c, h, binding.FormPost); err != nil {
-	// 	act = game.None
-	// 	return
-	// }
 
 	log.Debugf("h: %#v", h)
 	g.Title = h.Title
