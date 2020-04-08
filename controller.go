@@ -407,6 +407,7 @@ func (client Client) mcGet(c *gin.Context, g *Game) error {
 	if !ok {
 		return fmt.Errorf("cached item is not a *Game")
 	}
+	g2.SetCTX(c)
 
 	g = g2
 	color.WithMap(withGame(c, g), g.ColorMapFor(user.CurrentFrom(c)))
