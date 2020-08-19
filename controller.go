@@ -293,12 +293,14 @@ func (client Client) accept(prefix string) gin.HandlerFunc {
 			return
 		}
 
-		err = g.Start(c)
-		if err != nil {
-			log.Errorf(err.Error())
-			restful.AddErrorf(c, err.Error())
-			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
-			return
+		if start {
+			err = g.Start(c)
+			if err != nil {
+				log.Errorf(err.Error())
+				restful.AddErrorf(c, err.Error())
+				c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+				return
+			}
 		}
 
 		err = client.save(c, g)
