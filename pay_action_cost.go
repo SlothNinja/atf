@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,13 +17,13 @@ func init() {
 	gob.Register(new(payActionCostEntry))
 }
 
-func (g *Game) payActionCost(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) payActionCost(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var r Resource
 
-	if r, err = g.validatePayActionCost(c); err != nil {
+	if r, err = g.validatePayActionCost(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -50,8 +51,8 @@ func (g *Game) payActionCost(c *gin.Context) (tmpl string, act game.ActionType, 
 	return
 }
 
-func (g *Game) validatePayActionCost(c *gin.Context) (r Resource, err error) {
-	if err = g.validatePlayerAction(c); err != nil {
+func (g *Game) validatePayActionCost(c *gin.Context, cu *user.User) (r Resource, err error) {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

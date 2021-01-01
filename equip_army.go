@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,9 +16,9 @@ func init() {
 	gob.Register(new(equipArmyEntry))
 }
 
-func (g *Game) equipArmy(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) equipArmy(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	var equipArmyResources Resources
-	if equipArmyResources, err = g.validateEquipArmy(c); err != nil {
+	if equipArmyResources, err = g.validateEquipArmy(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -74,8 +75,8 @@ func (g *Game) updateEmpireRatings(empire *Empire) {
 	}
 }
 
-func (g *Game) validateEquipArmy(c *gin.Context) (rs Resources, err error) {
-	if err = g.validatePlayerAction(c); err != nil {
+func (g *Game) validateEquipArmy(c *gin.Context, cu *user.User) (rs Resources, err error) {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +18,7 @@ func init() {
 	gob.Register(new(makeToolEntry))
 }
 
-func (g *Game) tradeResource(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) tradeResource(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -26,7 +27,7 @@ func (g *Game) tradeResource(c *gin.Context) (tmpl string, act game.ActionType, 
 		usedSippar     bool
 	)
 
-	if gave, received, usedSippar, err = g.validateTrade(c); err != nil {
+	if gave, received, usedSippar, err = g.validateTrade(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -58,11 +59,11 @@ func (g *Game) tradeResource(c *gin.Context) (tmpl string, act game.ActionType, 
 	return
 }
 
-func (g *Game) validateTrade(c *gin.Context) (gave Resources, received Resources, usedSippar bool, err error) {
+func (g *Game) validateTrade(c *gin.Context, cu *user.User) (gave Resources, received Resources, usedSippar bool, err error) {
 	cp := g.CurrentPlayer()
 	a := g.SelectedArea()
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 
@@ -175,11 +176,11 @@ func (e *tradeEntry) HTML() template.HTML {
 		restful.ToSentence(gave), e.AreaName, restful.ToSentence(received))
 }
 
-func (g *Game) makeTool(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) makeTool(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateMakeTool(c); err != nil {
+	if err = g.validateMakeTool(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -202,7 +203,7 @@ func (g *Game) makeTool(c *gin.Context) (tmpl string, act game.ActionType, err e
 	return
 }
 
-func (g *Game) validateMakeTool(c *gin.Context) (err error) {
+func (g *Game) validateMakeTool(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -211,7 +212,7 @@ func (g *Game) validateMakeTool(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(c); {
+	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

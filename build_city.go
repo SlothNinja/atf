@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,11 +18,11 @@ func init() {
 	gob.Register(new(abandonCityEntry))
 }
 
-func (g *Game) buildCity(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) buildCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateBuildCity(c); err != nil {
+	if err = g.validateBuildCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -138,7 +139,7 @@ func (e *cityPrivilegeEntry) HTML() template.HTML {
 	return ""
 }
 
-func (g *Game) validateBuildCity(c *gin.Context) (err error) {
+func (g *Game) validateBuildCity(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -147,7 +148,7 @@ func (g *Game) validateBuildCity(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(c); {
+	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")
@@ -184,11 +185,11 @@ func (e *buildCityEntry) HTML() template.HTML {
 	return restful.HTML("%s built a city in %s.", e.Player().Name(), e.AreaName)
 }
 
-func (g *Game) abandonCity(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) abandonCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateAbandonCity(c); err != nil {
+	if err = g.validateAbandonCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -213,11 +214,11 @@ func (g *Game) abandonCity(c *gin.Context) (tmpl string, act game.ActionType, er
 	return
 }
 
-func (g *Game) validateAbandonCity(c *gin.Context) (err error) {
+func (g *Game) validateAbandonCity(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

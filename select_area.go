@@ -3,13 +3,14 @@ package atf
 import (
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) selectArea(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) selectArea(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	var aid AreaID
 
-	if aid, err = g.validateSelectArea(c); err != nil {
+	if aid, err = g.validateSelectArea(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -26,9 +27,9 @@ func (g *Game) selectArea(c *gin.Context) (tmpl string, act game.ActionType, err
 	}
 	switch {
 	case g.MultiAction == usedScribeMA:
-		tmpl, act, err = g.selectWorker(c)
+		tmpl, act, err = g.selectWorker(c, cu)
 	case g.MultiAction == selectedWorkerMA:
-		tmpl, act, err = g.placeWorker(c)
+		tmpl, act, err = g.placeWorker(c, cu)
 	case aid == RedPass, aid == PurplePass, aid == GreenPass:
 		tmpl, act = "atf/pass_dialog", game.Cache
 	case aid == SupplyTable:
@@ -55,11 +56,9 @@ func (g *Game) selectArea(c *gin.Context) (tmpl string, act game.ActionType, err
 	return
 }
 
-func (g *Game) validateSelectArea(c *gin.Context) (aid AreaID, err error) {
-	if !g.CUserIsCPlayerOrAdmin(c) {
-		aid, err = NoArea, sn.NewVError("Only the current player can perform an action.")
-	} else {
-		aid, err = getAreaID(c), nil
+func (g *Game) validateSelectArea(c *gin.Context, cu *user.User) (AreaID, error) {
+	if !g.IsCurrentPlayer(cu) {
+		return NoArea, sn.NewVError("Only the current player can perform an action.")
 	}
-	return
+	return getAreaID(c), nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,11 +17,11 @@ func init() {
 	gob.Register(new(babylonPrivilegeEntry))
 }
 
-func (g *Game) startEmpire(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) startEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	armies, babylonArmies, empire, err := g.validateStartEmpire(c)
+	armies, babylonArmies, empire, err := g.validateStartEmpire(c, cu)
 	if err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
@@ -46,7 +47,7 @@ func (g *Game) startEmpire(c *gin.Context) (tmpl string, act game.ActionType, er
 	return
 }
 
-func (g *Game) validateStartEmpire(c *gin.Context) (armies int, priv int, empire *Empire, err error) {
+func (g *Game) validateStartEmpire(c *gin.Context, cu *user.User) (armies int, priv int, empire *Empire, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -74,7 +75,7 @@ func (g *Game) validateStartEmpire(c *gin.Context) (armies int, priv int, empire
 	}
 
 	var cp *Player
-	switch cp, err = g.CurrentPlayer(), g.validatePlayerAction(c); {
+	switch cp, err = g.CurrentPlayer(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case armies == 0:
 		err = sn.NewVError("You can't start an empire in %s.", a.Name())
@@ -130,11 +131,11 @@ func (e *babylonPrivilegeEntry) HTML() template.HTML {
 	return restful.HTML("%s received 2 armies for city in Babylon.", e.Player().Name())
 }
 
-func (g *Game) cancelStartEmpire(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) cancelStartEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if cp := g.CurrentPlayer(); !g.CUserIsCPlayerOrAdmin(c) {
+	if cp := g.CurrentPlayer(); !g.IsCurrentPlayer(cu) {
 		tmpl, act, err = "atf/flash_notice", game.None, sn.NewVError("Only the current player may perform this action.")
 	} else {
 		restful.AddNoticef(c, "%s canceled start of empire in %s.", g.NameFor(cp), g.SelectedArea().Name())
@@ -143,11 +144,11 @@ func (g *Game) cancelStartEmpire(c *gin.Context) (tmpl string, act game.ActionTy
 	return
 }
 
-func (g *Game) confirmStartEmpire(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) confirmStartEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateConfirmStartEmpire(c); err != nil {
+	if err = g.validateConfirmStartEmpire(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -181,9 +182,9 @@ func (g *Game) confirmStartEmpire(c *gin.Context) (tmpl string, act game.ActionT
 	return
 }
 
-func (g *Game) validateConfirmStartEmpire(c *gin.Context) (err error) {
+func (g *Game) validateConfirmStartEmpire(c *gin.Context, cu *user.User) (err error) {
 	var a *Area
-	switch a, err = g.SelectedArea(), g.validatePlayerAction(c); {
+	switch a, err = g.SelectedArea(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

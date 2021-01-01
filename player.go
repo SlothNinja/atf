@@ -765,7 +765,7 @@ func (p *Player) hasAvailableTradersIn(a *Area) bool {
 	return p.availableTradersIn(a) > 0
 }
 
-func (g *Game) adminPlayer(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminPlayer(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 

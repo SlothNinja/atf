@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,11 +16,11 @@ func init() {
 	gob.Register(new(useScribeEntry))
 }
 
-func (g *Game) useScribe(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) useScribe(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateUseScribe(c); err != nil {
+	if err = g.validateUseScribe(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -35,7 +36,7 @@ func (g *Game) useScribe(c *gin.Context) (tmpl string, act game.ActionType, err 
 	return
 }
 
-func (g *Game) validateUseScribe(c *gin.Context) (err error) {
+func (g *Game) validateUseScribe(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -44,7 +45,7 @@ func (g *Game) validateUseScribe(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(c); {
+	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

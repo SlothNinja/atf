@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,11 +23,11 @@ type armyResources struct {
 	Tool  int `form:"tool"`
 }
 
-func (g *Game) buyArmies(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) buyArmies(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	buyArmyResources, bought, err := g.validateBuyArmies(c)
+	buyArmyResources, bought, err := g.validateBuyArmies(c, cu)
 	if err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
@@ -49,11 +50,11 @@ func (g *Game) buyArmies(c *gin.Context) (tmpl string, act game.ActionType, err 
 	return
 }
 
-func (g *Game) validateBuyArmies(c *gin.Context) (resources Resources, bought int, err error) {
+func (g *Game) validateBuyArmies(c *gin.Context, cu *user.User) (resources Resources, bought int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

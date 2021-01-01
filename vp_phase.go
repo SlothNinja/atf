@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -120,7 +121,7 @@ func (e *scoreEmpiresEntry) HTML() template.HTML {
 	return s
 }
 
-func (g *Game) expandCityPhase(c *gin.Context) (completed bool) {
+func (g *Game) expandCityPhase(c *gin.Context, cu *user.User) (completed bool) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -139,13 +140,13 @@ func (g *Game) expandCityPhase(c *gin.Context) (completed bool) {
 	return
 }
 
-func (g *Game) expandCity(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) expandCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var rs Resources
 
-	if rs, err = g.validateExpandCity(c); err != nil {
+	if rs, err = g.validateExpandCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -185,62 +186,61 @@ func (g *Game) expandCity(c *gin.Context) (tmpl string, act game.ActionType, err
 	return
 }
 
-func (g *Game) validateExpandCity(c *gin.Context) (rs Resources, err error) {
+func (g *Game) validateExpandCity(c *gin.Context, cu *user.User) (Resources, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if rs, err = getResourcesFrom(c); err != nil {
-		return
+	rs, err := getResourcesFrom(c)
+	if err != nil {
+		return rs, err
 	}
 
 	cp := g.CurrentPlayer()
 	for i, cnt := range rs {
 		r := Resource(i)
 		if cnt > cp.Resources[r] {
-			err = sn.NewVError("You do not have %d %s.", cnt, r)
-			return
+			return nil, sn.NewVError("You do not have %d %s.", cnt, r)
 		}
 		switch r {
 		case Wood:
 			if cnt != 2 {
-				err = sn.NewVError("Received %d wood. Must use 2 wood.", cnt)
-				return
+				return nil, sn.NewVError("Received %d wood. Must use 2 wood.", cnt)
 			}
 		case Tool, Gold, Oil, Lapis:
 			if cnt != 0 && cnt != 1 {
-				err = sn.NewVError("Received %d %s. Must spend only 0 or 1 %s",
+				return nil, sn.NewVError("Received %d %s. Must spend only 0 or 1 %s",
 					cnt, g.ResourceName(i), g.ResourceName(i))
-				return
 			}
 		default:
 			if cnt != 0 {
-				err = sn.NewVError("Received %d %s. Can't spend a %s to expand city.",
+				return nil, sn.NewVError("Received %d %s. Can't spend a %s to expand city.",
 					cnt, g.ResourceName(i), g.ResourceName(i))
-				return
 			}
 
 		}
 	}
 
-	switch a := g.SelectedArea(); {
-	case !g.CUserIsCPlayerOrAdmin(c):
-		err = sn.NewVError("Only the current player can perform an action.")
+	a := g.SelectedArea()
+	switch {
+	case !g.IsCurrentPlayer(cu):
+		return nil, sn.NewVError("Only the current player can perform an action.")
 	case g.Phase != ExpandCity:
-		err = sn.NewVError("You can not expand a city in the %q phase.", g.PhaseName())
+		return nil, sn.NewVError("You can not expand a city in the %q phase.", g.PhaseName())
 	case !a.IsSumer():
-		err = sn.NewVError("You can not expand a city in %s", a.Name())
+		return nil, sn.NewVError("You can not expand a city in %s", a.Name())
 	case !a.City.Built:
-		err = sn.NewVError("%s does not have a city to expand.", a.Name())
+		return nil, sn.NewVError("%s does not have a city to expand.", a.Name())
 	case a.City.Expanded:
-		err = sn.NewVError("The city in %s is already expanded.", a.Name())
+		return nil, sn.NewVError("The city in %s is already expanded.", a.Name())
 	case !a.City.Owner().Equal(cp):
-		err = sn.NewVError("You do not own the city in %s.", a.Name())
+		return nil, sn.NewVError("You do not own the city in %s.", a.Name())
 	case cp.Expansion < 1:
-		err = sn.NewVError("You do not have an expansion with which to expand the city.")
+		return nil, sn.NewVError("You do not have an expansion with which to expand the city.")
 	case cp.VPPassed:
-		err = sn.NewVError("You have already passed.")
+		return nil, sn.NewVError("You have already passed.")
+	default:
+		return rs, nil
 	}
-	return
 }
 
 type cityExpansionEntry struct {

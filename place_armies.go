@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,12 +17,12 @@ func init() {
 	gob.Register(new(removeWorkersEntry))
 }
 
-func (g *Game) placeArmies(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) placeArmies(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var armies int
-	if armies, err = g.validatePlaceArmies(c); err != nil {
+	if armies, err = g.validatePlaceArmies(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -52,12 +53,12 @@ func (g *Game) placeArmies(c *gin.Context) (tmpl string, act game.ActionType, er
 	return
 }
 
-func (g *Game) validatePlaceArmies(c *gin.Context) (armies int, err error) {
+func (g *Game) validatePlaceArmies(c *gin.Context, cu *user.User) (armies int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var cp *Player
-	switch cp, armies, err = g.CurrentPlayer(), getPlacedArmies(c), g.validatePlayerAction(c); {
+	switch cp, armies, err = g.CurrentPlayer(), getPlacedArmies(c), g.validatePlayerAction(cu); {
 	case err != nil:
 	case cp.PerformedAction:
 		err = sn.NewVError("You have already performed an action.")

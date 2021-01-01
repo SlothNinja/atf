@@ -9,6 +9,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
 )
@@ -19,17 +20,24 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		defer log.Debugf("Exiting")
 
 		var (
-			ks  []*datastore.Key
-			es  []interface{}
-			err error
+			ks []*datastore.Key
+			es []interface{}
 		)
+
+		cu, err := client.User.Current(c)
+		if err != nil {
+			log.Errorf(err.Error())
+			restful.AddErrorf(c, err.Error())
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
+		}
 
 		g := gameFrom(c)
 		switch g.Phase {
 		case Actions:
-			ks, es, err = client.actionsPhaseFinishTurn(c, g)
+			ks, es, err = client.actionsPhaseFinishTurn(c, g, cu)
 		case ExpandCity:
-			ks, es, err = client.expandCityPhaseFinishTurn(c, g)
+			ks, es, err = client.expandCityPhaseFinishTurn(c, g, cu)
 		}
 
 		if err != nil {
@@ -38,7 +46,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
-		err = client.saveWith(c, g, ks, es)
+		err = client.saveWith(c, g, cu, ks, es)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
@@ -48,7 +56,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 	}
 }
 
-func (g *Game) validateFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
+func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -56,7 +64,7 @@ func (g *Game) validateFinishTurn(c *gin.Context) (s *stats.Stats, err error) {
 	switch cp, s = g.CurrentPlayer(), stats.Fetched(c); {
 	case s == nil:
 		err = sn.NewVError("missing stats for player.")
-	case !g.CUserIsCPlayerOrAdmin(c):
+	case !g.IsCurrentPlayer(cu):
 		err = sn.NewVError("Only the current player may finish a turn.")
 	case !cp.PerformedAction:
 		err = sn.NewVError("%s has yet to perform an action.", g.NameFor(cp))
@@ -94,11 +102,11 @@ func (g *Game) actionPhaseNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game) ([]*datastore.Key, []interface{}, error) {
+func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateActionsPhaseFinishTurn(c)
+	s, err := g.validateActionsPhaseFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,7 +116,7 @@ func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game) ([]*datasto
 	if np == nil {
 		g.orderOfPlay(c)
 		g.scoreEmpires(c)
-		if completed := g.expandCityPhase(c); !completed {
+		if completed := g.expandCityPhase(c, cu); !completed {
 			s = s.GetUpdate(c, g.UpdatedAt)
 			return []*datastore.Key{s.Key}, []interface{}{s}, nil
 		}
@@ -144,11 +152,11 @@ func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game) ([]*datasto
 	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
-func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch s, err := g.validateFinishTurn(c); {
+	switch s, err := g.validateFinishTurn(c, cu); {
 	case err != nil:
 		return nil, err
 	case g.Phase != Actions:
@@ -176,11 +184,11 @@ func (g *Game) expandCityPhaseNextPlayer(pers ...game.Playerer) (p *Player) {
 	return
 }
 
-func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game) ([]*datastore.Key, []interface{}, error) {
+func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	s, err := g.validateExpandCityPhaseFinishTurn(c)
+	s, err := g.validateExpandCityPhaseFinishTurn(c, cu)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -221,14 +229,14 @@ func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game) ([]*data
 	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
-func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context) (*stats.Stats, error) {
+func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	switch s := stats.Fetched(c); {
 	case s == nil:
 		return nil, sn.NewVError("missing stats for player.")
-	case !g.CUserIsCPlayerOrAdmin(c):
+	case !g.IsCurrentPlayer(cu):
 		return nil, sn.NewVError("Only the current player may finish a turn.")
 	case g.Phase != ExpandCity:
 		return nil, sn.NewVError(`Expected "Expand City" phase but have %q phase.`, g.PhaseName())

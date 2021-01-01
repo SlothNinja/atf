@@ -5,14 +5,15 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) toStock(c *gin.Context) (tmpl string, err error) {
+func (g *Game) toStock(c *gin.Context, cu *user.User) (tmpl string, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateToStock(c); err != nil {
+	if err = g.validateToStock(c, cu); err != nil {
 		tmpl = "atf/select_worker_update"
 		return
 	}
@@ -31,11 +32,11 @@ func (g *Game) toStock(c *gin.Context) (tmpl string, err error) {
 	return
 }
 
-func (g *Game) validateToStock(c *gin.Context) (err error) {
+func (g *Game) validateToStock(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	switch err = g.validatePlayerAction(c); {
+	switch err = g.validatePlayerAction(cu); {
 	case err != nil:
 	case g.From == "Stock":
 		err = sn.NewVError("The originating and destination areas for a moved worker cannot be the same.")
@@ -45,8 +46,8 @@ func (g *Game) validateToStock(c *gin.Context) (err error) {
 	return
 }
 
-func (g *Game) placeWorker(c *gin.Context) (tmpl string, act game.ActionType, err error) {
-	if err = g.validatePlaceWorker(c); err != nil {
+func (g *Game) placeWorker(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
+	if err = g.validatePlaceWorker(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -68,13 +69,13 @@ func (g *Game) placeWorker(c *gin.Context) (tmpl string, act game.ActionType, er
 	return
 }
 
-func (g *Game) validatePlaceWorker(c *gin.Context) (err error) {
+func (g *Game) validatePlaceWorker(c *gin.Context, cu *user.User) (err error) {
 	var (
 		a  *Area
 		cp *Player
 	)
 
-	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(c); {
+	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

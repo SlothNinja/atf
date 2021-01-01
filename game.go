@@ -12,6 +12,7 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	gtype "github.com/SlothNinja/type"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -240,21 +241,21 @@ func (g *Game) PlayerByColor(c color.Color) *Player {
 	}
 }
 
-func (g *Game) undoAction(c *gin.Context) (tmpl string, err error) {
-	return g.undoRedoReset(c, "%s undid action.")
+func (g *Game) undoAction(c *gin.Context, cu *user.User) (tmpl string, err error) {
+	return g.undoRedoReset(c, cu, "%s undid action.")
 }
 
-func (g *Game) redoAction(c *gin.Context) (tmpl string, err error) {
-	return g.undoRedoReset(c, "%s redid action.")
+func (g *Game) redoAction(c *gin.Context, cu *user.User) (tmpl string, err error) {
+	return g.undoRedoReset(c, cu, "%s redid action.")
 }
 
-func (g *Game) resetTurn(c *gin.Context) (tmpl string, err error) {
-	return g.undoRedoReset(c, "%s reset turn.")
+func (g *Game) resetTurn(c *gin.Context, cu *user.User) (tmpl string, err error) {
+	return g.undoRedoReset(c, cu, "%s reset turn.")
 }
 
-func (g *Game) undoRedoReset(c *gin.Context, fmt string) (tmpl string, err error) {
+func (g *Game) undoRedoReset(c *gin.Context, cu *user.User, fmt string) (tmpl string, err error) {
 	cp := g.CurrentPlayer()
-	if !g.CUserIsCPlayerOrAdmin(c) {
+	if !g.IsCurrentPlayer(cu) {
 		return "", sn.NewVError("Only the current player may perform this action.")
 	}
 
@@ -263,13 +264,14 @@ func (g *Game) undoRedoReset(c *gin.Context, fmt string) (tmpl string, err error
 }
 
 func (g *Game) CurrentPlayer() *Player {
-	if p := g.CurrentPlayerer(); p != nil {
+	p := g.CurrentPlayerer()
+	if p != nil {
 		return p.(*Player)
 	}
 	return nil
 }
 
-func (g *Game) adminSupplyTable(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminSupplyTable(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -308,7 +310,7 @@ func (g *Game) anyPassed() bool {
 	return g.Players()[0].Passed || g.Players()[1].Passed || g.Players()[2].Passed
 }
 
-func (g *Game) adminHeader(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 

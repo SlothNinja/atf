@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,11 +16,11 @@ func init() {
 	gob.Register(new(placeWorkersEntry))
 }
 
-func (g *Game) placeWorkers(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) placeWorkers(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	res, workers, err := g.validatePlaceWorkers(c)
+	res, workers, err := g.validatePlaceWorkers(c, cu)
 	if err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
@@ -44,8 +45,8 @@ func (g *Game) placeWorkers(c *gin.Context) (tmpl string, act game.ActionType, e
 	return
 }
 
-func (g *Game) validatePlaceWorkers(c *gin.Context) (rs Resource, ws int, err error) {
-	if err = g.validatePlayerAction(c); err != nil {
+func (g *Game) validatePlaceWorkers(c *gin.Context, cu *user.User) (rs Resource, ws int, err error) {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 

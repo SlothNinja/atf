@@ -8,6 +8,7 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +20,7 @@ func init() {
 	gob.Register(new(unsuccessfulInvasionEntry))
 }
 
-func (g *Game) reinforceArmy(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) reinforceArmy(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -28,7 +29,7 @@ func (g *Game) reinforceArmy(c *gin.Context) (tmpl string, act game.ActionType, 
 		armies int
 	)
 
-	if a, armies, err = g.validateReinforceArmy(c); err != nil {
+	if a, armies, err = g.validateReinforceArmy(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -50,13 +51,13 @@ func (g *Game) reinforceArmy(c *gin.Context) (tmpl string, act game.ActionType, 
 	return
 }
 
-func (g *Game) validateReinforceArmy(c *gin.Context) (a *Area, armies int, err error) {
+func (g *Game) validateReinforceArmy(c *gin.Context, cu *user.User) (a *Area, armies int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	var cp *Player
 
-	switch a, cp, armies, err = g.SelectedArea(), g.CurrentPlayer(), 1+g.expansionCost(), g.validatePlayerAction(c); {
+	switch a, cp, armies, err = g.SelectedArea(), g.CurrentPlayer(), 1+g.expansionCost(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")
@@ -97,7 +98,7 @@ func (e *reinforceArmyEntry) HTML() template.HTML {
 	return restful.HTML("%s paid army to continue expansion and reinforce army in %s.", e.Player().Name(), e.AreaName)
 }
 
-func (g *Game) invadeArea(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) invadeArea(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -106,7 +107,7 @@ func (g *Game) invadeArea(c *gin.Context) (tmpl string, act game.ActionType, err
 		armies int
 	)
 
-	if a, armies, err = g.validateInvadeArea(c); err != nil {
+	if a, armies, err = g.validateInvadeArea(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -129,7 +130,7 @@ func (g *Game) invadeArea(c *gin.Context) (tmpl string, act game.ActionType, err
 	return
 }
 
-func (g *Game) validateInvadeArea(c *gin.Context) (a *Area, armies int, err error) {
+func (g *Game) validateInvadeArea(c *gin.Context, cu *user.User) (a *Area, armies int, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -138,7 +139,7 @@ func (g *Game) validateInvadeArea(c *gin.Context) (a *Area, armies int, err erro
 		cp   *Player
 	)
 
-	switch armies, cost, a, cp, err = 1, g.expansionCost(), g.SelectedArea(), g.CurrentPlayer(), g.validateExpandEmpire(c); {
+	switch armies, cost, a, cp, err = 1, g.expansionCost(), g.SelectedArea(), g.CurrentPlayer(), g.validateExpandEmpire(c, cu); {
 	case err != nil:
 	case !cp.hasArmyAdjacentTo(a):
 		err = sn.NewVError("You do not have an army adjacent to %s.", a.Name())
@@ -177,11 +178,11 @@ func (e *invadeAreaEntry) HTML() template.HTML {
 	return restful.HTML("%s paid army to continue expansion and invaded %s.", e.Player().Name(), e.AreaName)
 }
 
-func (g *Game) invadeAreaWarning(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) invadeAreaWarning(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateInvadeAreaWarning(c); err != nil {
+	if err = g.validateInvadeAreaWarning(c, cu); err != nil {
 		act, tmpl = game.None, "atf/flash_notice"
 	} else {
 		act, tmpl = game.Cache, "atf/invade_area_warning_dialog"
@@ -189,7 +190,7 @@ func (g *Game) invadeAreaWarning(c *gin.Context) (tmpl string, act game.ActionTy
 	return
 }
 
-func (g *Game) validateInvadeAreaWarning(c *gin.Context) (err error) {
+func (g *Game) validateInvadeAreaWarning(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -198,7 +199,7 @@ func (g *Game) validateInvadeAreaWarning(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(c); {
+	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")
@@ -212,11 +213,11 @@ func (g *Game) validateInvadeAreaWarning(c *gin.Context) (err error) {
 	return
 }
 
-func (g *Game) cancelInvasion(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) cancelInvasion(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateExpandEmpire(c); err != nil {
+	if err = g.validateExpandEmpire(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 	} else {
 		restful.AddNoticef(c, "%s canceled invasion of %s.", g.NameFor(g.CurrentPlayer()), g.SelectedArea().Name())
@@ -226,7 +227,7 @@ func (g *Game) cancelInvasion(c *gin.Context) (tmpl string, act game.ActionType,
 	return
 }
 
-func (g *Game) confirmInvasion(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) confirmInvasion(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -235,7 +236,7 @@ func (g *Game) confirmInvasion(c *gin.Context) (tmpl string, act game.ActionType
 		armies int
 	)
 
-	if a, armies, err = g.validateInvadeArea(c); err != nil {
+	if a, armies, err = g.validateInvadeArea(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -340,7 +341,7 @@ func (e *unsuccessfulInvasionEntry) HTML() template.HTML {
 	return restful.HTML("%s paid army to continue expansion and unsuccessfully invaded %s with a roll of %d and %d which did not satisfy the %d+ needed.", e.Player().Name(), e.AreaName, e.D1, e.D2, e.Success)
 }
 
-func (g *Game) destroyCity(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) destroyCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -350,7 +351,7 @@ func (g *Game) destroyCity(c *gin.Context) (tmpl string, act game.ActionType, er
 		expanded bool
 	)
 
-	if a, armies, expanded, err = g.validateDestroyCity(c); err != nil {
+	if a, armies, expanded, err = g.validateDestroyCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -379,11 +380,11 @@ func (g *Game) destroyCity(c *gin.Context) (tmpl string, act game.ActionType, er
 	return
 }
 
-func (g *Game) validateDestroyCity(c *gin.Context) (a *Area, armies int, expanded bool, err error) {
+func (g *Game) validateDestroyCity(c *gin.Context, cu *user.User) (a *Area, armies int, expanded bool, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validatePlayerAction(c); err != nil {
+	if err = g.validatePlayerAction(cu); err != nil {
 		return
 	}
 
@@ -437,7 +438,7 @@ func (e *destroyCityEntry) HTML() template.HTML {
 		e.Player().Name(), e.Armies, e.OtherPlayer().Name(), e.AreaName)
 }
 
-func (g *Game) validateExpandEmpire(c *gin.Context) (err error) {
+func (g *Game) validateExpandEmpire(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -446,7 +447,7 @@ func (g *Game) validateExpandEmpire(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(c); {
+	switch a, cp, err = g.SelectedArea(), g.CurrentPlayer(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

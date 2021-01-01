@@ -5,6 +5,7 @@ import (
 
 	"github.com/SlothNinja/game"
 	"github.com/SlothNinja/log"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -417,7 +418,7 @@ func (g *Game) areasAdjacentTo(a *Area) Areas {
 	return areas
 }
 
-func (g *Game) adminSumerArea(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminSumerArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -461,7 +462,7 @@ func (g *Game) adminSumerArea(c *gin.Context) (string, game.ActionType, error) {
 	// return
 }
 
-func (g *Game) adminNonSumerArea(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminNonSumerArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -508,7 +509,7 @@ func (ss sslice) include(s string) bool {
 	return false
 }
 
-func (g *Game) adminWorkerBox(c *gin.Context) (string, game.ActionType, error) {
+func (g *Game) adminWorkerBox(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 

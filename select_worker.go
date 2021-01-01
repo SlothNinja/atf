@@ -5,14 +5,15 @@ import (
 	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
+	"github.com/SlothNinja/user"
 	"github.com/gin-gonic/gin"
 )
 
-func (g *Game) fromStock(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) fromStock(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateFromStock(c); err != nil {
+	if err = g.validateFromStock(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -24,8 +25,8 @@ func (g *Game) fromStock(c *gin.Context) (tmpl string, act game.ActionType, err 
 	return
 }
 
-func (g *Game) validateFromStock(c *gin.Context) (err error) {
-	switch err = g.validatePlayerAction(c); {
+func (g *Game) validateFromStock(c *gin.Context, cu *user.User) (err error) {
+	switch err = g.validatePlayerAction(cu); {
 	case err != nil:
 	case g.MultiAction != usedScribeMA:
 		err = sn.NewVError("You cannot chose 'From Stock' at this time.")
@@ -35,11 +36,11 @@ func (g *Game) validateFromStock(c *gin.Context) (err error) {
 	return
 }
 
-func (g *Game) selectWorker(c *gin.Context) (tmpl string, act game.ActionType, err error) {
+func (g *Game) selectWorker(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	if err = g.validateSelectWorker(c); err != nil {
+	if err = g.validateSelectWorker(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
 		return
 	}
@@ -64,7 +65,7 @@ func (g *Game) selectWorker(c *gin.Context) (tmpl string, act game.ActionType, e
 	return
 }
 
-func (g *Game) validateSelectWorker(c *gin.Context) (err error) {
+func (g *Game) validateSelectWorker(c *gin.Context, cu *user.User) (err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
@@ -73,7 +74,7 @@ func (g *Game) validateSelectWorker(c *gin.Context) (err error) {
 		cp *Player
 	)
 
-	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(c); {
+	switch cp, a, err = g.CurrentPlayer(), g.SelectedArea(), g.validatePlayerAction(cu); {
 	case err != nil:
 	case a == nil:
 		err = sn.NewVError("No area selected.")

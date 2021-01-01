@@ -48,69 +48,69 @@ func withJSON(c *gin.Context, g *Game) *gin.Context {
 	return c
 }
 
-func (g *Game) Update(c *gin.Context) (tmpl string, t game.ActionType, err error) {
+func (g *Game) Update(c *gin.Context, cu *user.User) (tmpl string, t game.ActionType, err error) {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
 	switch a := c.PostForm("action"); a {
 	case "select-area":
-		return g.selectArea(c)
+		return g.selectArea(c, cu)
 	case "build-city":
-		return g.buildCity(c)
+		return g.buildCity(c, cu)
 	case "buy-armies":
-		return g.buyArmies(c)
+		return g.buyArmies(c, cu)
 	case "equip-army":
-		return g.equipArmy(c)
+		return g.equipArmy(c, cu)
 	case "place-armies":
-		return g.placeArmies(c)
+		return g.placeArmies(c, cu)
 	case "place-workers":
-		return g.placeWorkers(c)
+		return g.placeWorkers(c, cu)
 	case "trade-resource":
-		return g.tradeResource(c)
+		return g.tradeResource(c, cu)
 	case "use-scribe":
-		return g.useScribe(c)
+		return g.useScribe(c, cu)
 	case "from-stock":
-		return g.fromStock(c)
+		return g.fromStock(c, cu)
 	case "make-tool":
-		return g.makeTool(c)
+		return g.makeTool(c, cu)
 	case "start-empire":
-		return g.startEmpire(c)
+		return g.startEmpire(c, cu)
 	case "cancel-start-empire":
-		return g.cancelStartEmpire(c)
+		return g.cancelStartEmpire(c, cu)
 	case "confirm-start-empire":
-		return g.confirmStartEmpire(c)
+		return g.confirmStartEmpire(c, cu)
 	case "invade-area":
-		return g.invadeArea(c)
+		return g.invadeArea(c, cu)
 	case "invade-area-warning":
-		return g.invadeAreaWarning(c)
+		return g.invadeAreaWarning(c, cu)
 	case "cancel-invasion":
-		return g.cancelInvasion(c)
+		return g.cancelInvasion(c, cu)
 	case "confirm-invasion":
-		return g.confirmInvasion(c)
+		return g.confirmInvasion(c, cu)
 	case "reinforce-army":
-		return g.reinforceArmy(c)
+		return g.reinforceArmy(c, cu)
 	case "destroy-city":
-		return g.destroyCity(c)
+		return g.destroyCity(c, cu)
 	case "pass":
-		return g.pass(c)
+		return g.pass(c, cu)
 	case "pay-action-cost":
-		return g.payActionCost(c)
+		return g.payActionCost(c, cu)
 	case "expand-city":
-		return g.expandCity(c)
+		return g.expandCity(c, cu)
 	case "abandon-city":
-		return g.abandonCity(c)
+		return g.abandonCity(c, cu)
 	case "admin-header":
-		return g.adminHeader(c)
+		return g.adminHeader(c, cu)
 	case "admin-sumer-area":
-		return g.adminSumerArea(c)
+		return g.adminSumerArea(c, cu)
 	case "admin-non-sumer-area":
-		return g.adminNonSumerArea(c)
+		return g.adminNonSumerArea(c, cu)
 	case "admin-worker-box":
-		return g.adminWorkerBox(c)
+		return g.adminWorkerBox(c, cu)
 	case "admin-player":
-		return g.adminPlayer(c)
+		return g.adminPlayer(c, cu)
 	case "admin-supply-table":
-		return g.adminSupplyTable(c)
+		return g.adminSupplyTable(c, cu)
 	default:
 		return "atf/flash_notice", game.None, sn.NewVError("%v is not a valid action.", a)
 	}
@@ -120,22 +120,30 @@ func newGamer(c *gin.Context) game.Gamer {
 	return New(c, 0)
 }
 
+func isAdmin(u *user.User) bool {
+	if u == nil {
+		return false
+	}
+	return u.Admin
+}
+
 func (client Client) show(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
 
 		g := gameFrom(c)
-		cu, err := user.CurrentFrom(c)
+		cu, err := client.User.Current(c)
 		if err != nil {
 			log.Debugf(err.Error())
 		}
+
 		c.HTML(http.StatusOK, prefix+"/show", gin.H{
 			"Context":    c,
 			"VersionID":  sn.VersionID(),
 			"CUser":      cu,
 			"Game":       g,
-			"IsAdmin":    user.IsAdmin(c),
+			"IsAdmin":    isAdmin(cu),
 			"Admin":      game.AdminFrom(c),
 			"MessageLog": mlog.From(c),
 			"ColorMap":   color.MapFrom(c),
@@ -156,8 +164,12 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		}
+		cu, err := client.User.Current(c)
+		if err != nil {
+			log.Debugf(err.Error())
+		}
 
-		template, actionType, err := g.Update(c)
+		template, actionType, err := g.Update(c, cu)
 		switch {
 		case err != nil && sn.IsVError(err):
 			restful.AddErrorf(c, "%v", err)
@@ -167,17 +179,17 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, homePath)
 			return
 		case actionType == game.Cache:
-			mkey := g.UndoKey(c)
+			mkey := g.UndoKey(c, cu)
 			client.Cache.SetDefault(mkey, g)
 		case actionType == game.Save:
-			err = client.save(c, g)
+			err = client.save(c, g, cu)
 			if err != nil {
 				log.Errorf(err.Error())
 				c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 				return
 			}
 		case actionType == game.Undo:
-			mkey := g.UndoKey(c)
+			mkey := g.UndoKey(c, cu)
 			client.Cache.Delete(mkey)
 		}
 
@@ -187,40 +199,36 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 		case template == "":
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 		default:
-			cu, err := user.CurrentFrom(c)
-			if err != nil {
-				log.Debugf(err.Error())
-			}
 			c.HTML(http.StatusOK, template, gin.H{
 				"Context":   c,
 				"VersionID": sn.VersionID(),
 				"CUser":     cu,
 				"Game":      g,
 				"Admin":     game.AdminFrom(c),
-				"IsAdmin":   user.IsAdmin(c),
+				"IsAdmin":   isAdmin(cu),
 				"Notices":   restful.NoticesFrom(c),
 				"Errors":    restful.ErrorsFrom(c),
 			})
 		}
 	}
 }
-func (srv Client) new(prefix string) gin.HandlerFunc {
+func (client Client) new(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
 		defer log.Debugf("Exiting")
 
 		g := New(c, 0)
 		withGame(c, g)
-		if err := g.FromParams(c, gtype.GOT); err != nil {
+		cu, err := client.User.Current(c)
+		if err != nil {
+			log.Debugf(err.Error())
+		}
+		if err := g.FromParams(c, cu, gtype.GOT); err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
 			return
 		}
 
-		cu, err := user.CurrentFrom(c)
-		if err != nil {
-			log.Debugf(err.Error())
-		}
 		c.HTML(http.StatusOK, prefix+"/new", gin.H{
 			"Context":   c,
 			"VersionID": sn.VersionID(),
@@ -237,8 +245,14 @@ func (client Client) create(prefix string) gin.HandlerFunc {
 
 		g := New(c, 0)
 		withGame(c, g)
+		cu, err := client.User.Current(c)
+		if err != nil {
+			log.Errorf(err.Error())
+			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
+			return
+		}
 
-		err := g.FromForm(c, g.Type)
+		err = g.FromForm(c, cu, g.Type)
 		if err != nil {
 			log.Errorf(err.Error())
 			c.Redirect(http.StatusSeeOther, recruitingPath(prefix))
@@ -294,12 +308,12 @@ func (client Client) accept(prefix string) gin.HandlerFunc {
 			return
 		}
 
-		u, err := user.CurrentFrom(c)
+		cu, err := client.User.Current(c)
 		if err != nil {
 			log.Debugf(err.Error())
 		}
 
-		start, err := g.Accept(c, u)
+		start, err := g.Accept(c, cu)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
@@ -317,7 +331,7 @@ func (client Client) accept(prefix string) gin.HandlerFunc {
 			}
 		}
 
-		err = client.save(c, g)
+		err = client.save(c, g, cu)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
@@ -348,12 +362,12 @@ func (client Client) drop(prefix string) gin.HandlerFunc {
 			return
 		}
 
-		u, err := user.CurrentFrom(c)
+		cu, err := client.User.Current(c)
 		if err != nil {
 			log.Debugf(err.Error())
 		}
 
-		err = g.Drop(u)
+		err = g.Drop(cu)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
@@ -361,7 +375,7 @@ func (client Client) drop(prefix string) gin.HandlerFunc {
 			return
 		}
 
-		err = client.save(c, g)
+		err = client.save(c, g, cu)
 		if err != nil {
 			log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
@@ -384,6 +398,10 @@ func (client Client) fetch(c *gin.Context) {
 
 	log.Debugf("id: %v", id)
 	g := New(c, id)
+	cu, err := client.User.Current(c)
+	if err != nil {
+		log.Debugf(err.Error())
+	}
 
 	switch action := c.PostForm("action"); {
 	case action == "reset":
@@ -397,14 +415,9 @@ func (client Client) fetch(c *gin.Context) {
 			return
 		}
 	default:
-		cu, err := user.CurrentFrom(c)
-		if err != nil {
-			log.Debugf(err.Error())
-		}
-
 		if cu != nil {
 			// pull from cache and return if successful; otherwise pull from datastore
-			err := client.mcGet(c, g)
+			err := client.mcGet(c, g, cu)
 			if err == nil {
 				return
 			}
@@ -419,11 +432,11 @@ func (client Client) fetch(c *gin.Context) {
 }
 
 // pull temporary game state from cache.  Note may be different from value stored in datastore.
-func (client Client) mcGet(c *gin.Context, g *Game) error {
+func (client Client) mcGet(c *gin.Context, g *Game, cu *user.User) error {
 	log.Debugf("Entering")
 	defer log.Debugf("Exiting")
 
-	mkey := g.GetHeader().UndoKey(c)
+	mkey := g.GetHeader().UndoKey(c, cu)
 	item, found := client.Cache.Get(mkey)
 	if !found {
 		return fmt.Errorf("game not found")
@@ -435,7 +448,7 @@ func (client Client) mcGet(c *gin.Context, g *Game) error {
 	}
 	g2.SetCTX(c)
 
-	cu, err := user.CurrentFrom(c)
+	cu, err := client.User.Current(c)
 	if err != nil {
 		log.Debugf(err.Error())
 	}
@@ -473,7 +486,7 @@ func (client Client) dsGet(c *gin.Context, g *Game) error {
 		restful.AddErrorf(c, err.Error())
 		return err
 	}
-	cu, err := user.CurrentFrom(c)
+	cu, err := client.User.Current(c)
 	if err != nil {
 		log.Debugf(err.Error())
 	}
@@ -508,7 +521,7 @@ func newPath(prefix string) string {
 	return fmt.Sprintf("/%s/game/new", prefix)
 }
 
-func (client Client) save(c *gin.Context, g *Game) error {
+func (client Client) save(c *gin.Context, g *Game, cu *user.User) error {
 	_, err := client.DS.RunInTransaction(c, func(tx *datastore.Transaction) error {
 		oldG := New(c, g.ID())
 		err := tx.Get(oldG.Key, oldG.Header)
@@ -530,13 +543,13 @@ func (client Client) save(c *gin.Context, g *Game) error {
 			return err
 		}
 
-		client.Cache.Delete(g.UndoKey(c))
+		client.Cache.Delete(g.UndoKey(c, cu))
 		return nil
 	})
 	return err
 }
 
-func (client Client) saveWith(c *gin.Context, g *Game, ks []*datastore.Key, es []interface{}) error {
+func (client Client) saveWith(c *gin.Context, g *Game, cu *user.User, ks []*datastore.Key, es []interface{}) error {
 	_, err := client.DS.RunInTransaction(c, func(tx *datastore.Transaction) error {
 		oldG := New(c, g.ID())
 		err := tx.Get(oldG.Key, oldG.Header)
@@ -561,7 +574,7 @@ func (client Client) saveWith(c *gin.Context, g *Game, ks []*datastore.Key, es [
 			return err
 		}
 
-		client.Cache.Delete(g.UndoKey(c))
+		client.Cache.Delete(g.UndoKey(c, cu))
 		return nil
 	})
 	return err
@@ -605,12 +618,15 @@ func (client Client) undo(prefix string) gin.HandlerFunc {
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
-		mkey := g.UndoKey(c)
-		client.Cache.Delete(mkey)
-		cu, err := user.CurrentFrom(c)
+		cu, err := client.User.Current(c)
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Errorf(err.Error())
+			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
+			return
 		}
+
+		mkey := g.UndoKey(c, cu)
+		client.Cache.Delete(mkey)
 		restful.AddNoticef(c, "%s undid turn.", cu)
 		c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 	}
@@ -622,7 +638,7 @@ func (client Client) index(prefix string) gin.HandlerFunc {
 		defer log.Debugf("Exiting")
 
 		gs := game.GamersFrom(c)
-		cu, err := user.CurrentFrom(c)
+		cu, err := client.User.Current(c)
 		if err != nil {
 			log.Debugf(err.Error())
 		}
