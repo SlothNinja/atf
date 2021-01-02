@@ -120,13 +120,6 @@ func newGamer(c *gin.Context) game.Gamer {
 	return New(c, 0)
 }
 
-func isAdmin(u *user.User) bool {
-	if u == nil {
-		return false
-	}
-	return u.Admin
-}
-
 func (client Client) show(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Debugf("Entering")
@@ -143,7 +136,7 @@ func (client Client) show(prefix string) gin.HandlerFunc {
 			"VersionID":  sn.VersionID(),
 			"CUser":      cu,
 			"Game":       g,
-			"IsAdmin":    isAdmin(cu),
+			"IsAdmin":    cu.IsAdmin(),
 			"Admin":      game.AdminFrom(c),
 			"MessageLog": mlog.From(c),
 			"ColorMap":   color.MapFrom(c),
@@ -205,7 +198,7 @@ func (client Client) update(prefix string) gin.HandlerFunc {
 				"CUser":     cu,
 				"Game":      g,
 				"Admin":     game.AdminFrom(c),
-				"IsAdmin":   isAdmin(cu),
+				"IsAdmin":   cu.IsAdmin(),
 				"Notices":   restful.NoticesFrom(c),
 				"Errors":    restful.ErrorsFrom(c),
 			})
