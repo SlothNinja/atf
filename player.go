@@ -3,6 +3,7 @@ package atf
 import (
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"html/template"
 	"sort"
 
@@ -860,3 +861,30 @@ func (p *Player) hasCityIn(aid AreaID) bool {
 //
 //	return "", game.Save, nil
 //}
+
+func (g *Game) Color(p *Player, cu *user.User) color.Color {
+	uid := g.UserIDS[p.ID()]
+	cm := g.ColorMapFor(cu)
+	return cm[int(uid)]
+}
+
+func (g *Game) GravatarFor(p *Player, cu *user.User) template.HTML {
+	return template.HTML(fmt.Sprintf(`<a href=%q ><img src=%q alt="Gravatar" class="%s-border" /> </a>`,
+		g.UserPathFor(p), user.GravatarURL(g.EmailFor(p), "80", g.GravTypeFor(p)), g.Color(p, cu)))
+}
+
+var textColors = map[color.Color]color.Color{
+	color.Yellow: color.Black,
+	color.Purple: color.White,
+	color.Green:  color.Yellow,
+	color.White:  color.Black,
+	color.Black:  color.White,
+}
+
+func (g *Game) TextColor(p *Player, cu *user.User) color.Color {
+	c, ok := textColors[g.Color(p, cu)]
+	if !ok {
+		c = color.Black
+	}
+	return c
+}
