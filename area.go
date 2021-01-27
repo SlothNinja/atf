@@ -419,8 +419,8 @@ func (g *Game) areasAdjacentTo(a *Area) Areas {
 }
 
 func (g *Game) adminSumerArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a := g.SelectedArea()
 	// 	na := g.newArea(a.ID, 0)
@@ -463,8 +463,8 @@ func (g *Game) adminSumerArea(c *gin.Context, cu *user.User) (string, game.Actio
 }
 
 func (g *Game) adminNonSumerArea(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a := g.SelectedArea()
 	na := struct {
@@ -510,8 +510,8 @@ func (ss sslice) include(s string) bool {
 }
 
 func (g *Game) adminWorkerBox(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a := g.SelectedArea()
 	na := struct {

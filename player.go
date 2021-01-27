@@ -111,16 +111,16 @@ func (this *Player) compareByBid(p *Player) game.Comparison {
 	return game.EqualTo
 }
 
-func (client Client) determinePlaces(c *gin.Context, g *Game) (contest.Places, error) {
+func (client *Client) determinePlaces(c *gin.Context, g *Game) ([]contest.ResultsMap, error) {
 	// sort players by score
 	players := g.Players()
 	sort.Sort(Reverse{ByScore{players}})
 	g.setPlayers(players)
 
-	places := make(contest.Places, 0)
+	places := make([]contest.ResultsMap, 0)
 	for i, p1 := range g.Players() {
 		rmap := make(contest.ResultsMap, 0)
-		results := make(contest.Results, 0)
+		results := make([]*contest.Result, 0)
 		for j, p2 := range g.Players() {
 			r, err := client.Rating.For(c, p2.User(), g.Type)
 			if err != nil {
@@ -767,8 +767,8 @@ func (p *Player) hasAvailableTradersIn(a *Area) bool {
 }
 
 func (g *Game) adminPlayer(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	p := g.SelectedPlayer()
 	//np := newPlayer()

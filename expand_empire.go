@@ -21,8 +21,8 @@ func init() {
 }
 
 func (g *Game) reinforceArmy(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a      *Area
@@ -52,8 +52,8 @@ func (g *Game) reinforceArmy(c *gin.Context, cu *user.User) (tmpl string, act ga
 }
 
 func (g *Game) validateReinforceArmy(c *gin.Context, cu *user.User) (a *Area, armies int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var cp *Player
 
@@ -99,8 +99,8 @@ func (e *reinforceArmyEntry) HTML() template.HTML {
 }
 
 func (g *Game) invadeArea(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a      *Area
@@ -131,8 +131,8 @@ func (g *Game) invadeArea(c *gin.Context, cu *user.User) (tmpl string, act game.
 }
 
 func (g *Game) validateInvadeArea(c *gin.Context, cu *user.User) (a *Area, armies int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		cost int
@@ -179,8 +179,8 @@ func (e *invadeAreaEntry) HTML() template.HTML {
 }
 
 func (g *Game) invadeAreaWarning(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateInvadeAreaWarning(c, cu); err != nil {
 		act, tmpl = game.None, "atf/flash_notice"
@@ -191,8 +191,8 @@ func (g *Game) invadeAreaWarning(c *gin.Context, cu *user.User) (tmpl string, ac
 }
 
 func (g *Game) validateInvadeAreaWarning(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area
@@ -214,8 +214,8 @@ func (g *Game) validateInvadeAreaWarning(c *gin.Context, cu *user.User) (err err
 }
 
 func (g *Game) cancelInvasion(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateExpandEmpire(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -228,8 +228,8 @@ func (g *Game) cancelInvasion(c *gin.Context, cu *user.User) (tmpl string, act g
 }
 
 func (g *Game) confirmInvasion(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a      *Area
@@ -342,8 +342,8 @@ func (e *unsuccessfulInvasionEntry) HTML() template.HTML {
 }
 
 func (g *Game) destroyCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a        *Area
@@ -381,8 +381,8 @@ func (g *Game) destroyCity(c *gin.Context, cu *user.User) (tmpl string, act game
 }
 
 func (g *Game) validateDestroyCity(c *gin.Context, cu *user.User) (a *Area, armies int, expanded bool, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePlayerAction(cu); err != nil {
 		return
@@ -439,8 +439,8 @@ func (e *destroyCityEntry) HTML() template.HTML {
 }
 
 func (g *Game) validateExpandEmpire(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area

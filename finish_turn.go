@@ -10,14 +10,13 @@ import (
 	"github.com/SlothNinja/restful"
 	"github.com/SlothNinja/sn"
 	"github.com/SlothNinja/user"
-	stats "github.com/SlothNinja/user-stats"
 	"github.com/gin-gonic/gin"
 )
 
-func (client Client) finish(prefix string) gin.HandlerFunc {
+func (client *Client) finish(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Debugf("Entering")
-		defer log.Debugf("Exiting")
+		client.Log.Debugf(msgEnter)
+		defer client.Log.Debugf(msgExit)
 
 		var (
 			ks []*datastore.Key
@@ -26,7 +25,7 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 
 		cu, err := client.User.Current(c)
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
@@ -41,14 +40,14 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 		}
 
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
 			c.Redirect(http.StatusSeeOther, showPath(prefix, c.Param(hParam)))
 			return
 		}
 		err = client.saveWith(c, g, cu, ks, es)
 		if err != nil {
-			log.Errorf(err.Error())
+			client.Log.Errorf(err.Error())
 			restful.AddErrorf(c, err.Error())
 			return
 		}
@@ -56,12 +55,12 @@ func (client Client) finish(prefix string) gin.HandlerFunc {
 	}
 }
 
-func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (s *stats.Stats, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateFinishTurn(c *gin.Context, cu *user.User) (s *user.Stats, err error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var cp *Player
-	switch cp, s = g.CurrentPlayer(), stats.Fetched(c); {
+	switch cp, s = g.CurrentPlayer(), user.StatsFetched(c); {
 	case s == nil:
 		err = sn.NewVError("missing stats for player.")
 	case !g.IsCurrentPlayer(cu):
@@ -102,9 +101,9 @@ func (g *Game) actionPhaseNextPlayer(pers ...game.Playerer) *Player {
 	return nil
 }
 
-func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) actionsPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateActionsPhaseFinishTurn(c, cu)
 	if err != nil {
@@ -143,7 +142,7 @@ func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game, cu *user.Us
 	if newCP != nil && oldCP.ID() != newCP.ID() {
 		err = g.SendTurnNotificationsTo(c, newCP)
 		if err != nil {
-			log.Warningf(err.Error())
+			client.Log.Warningf(err.Error())
 		}
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
@@ -152,9 +151,9 @@ func (client Client) actionsPhaseFinishTurn(c *gin.Context, g *Game, cu *user.Us
 	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
-func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateActionsPhaseFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	switch s, err := g.validateFinishTurn(c, cu); {
 	case err != nil:
@@ -184,9 +183,9 @@ func (g *Game) expandCityPhaseNextPlayer(pers ...game.Playerer) (p *Player) {
 	return
 }
 
-func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game, cu *user.User) ([]*datastore.Key, []interface{}, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	s, err := g.validateExpandCityPhaseFinishTurn(c, cu)
 	if err != nil {
@@ -220,7 +219,7 @@ func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game, cu *user
 	if newCP != nil && oldCP.ID() != newCP.ID() {
 		err = g.SendTurnNotificationsTo(c, newCP)
 		if err != nil {
-			log.Warningf(err.Error())
+			client.Log.Warningf(err.Error())
 		}
 	}
 	restful.AddNoticef(c, "%s finished turn.", g.NameFor(oldCP))
@@ -229,11 +228,11 @@ func (client Client) expandCityPhaseFinishTurn(c *gin.Context, g *Game, cu *user
 	return []*datastore.Key{s.Key}, []interface{}{s}, nil
 }
 
-func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context, cu *user.User) (*stats.Stats, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (g *Game) validateExpandCityPhaseFinishTurn(c *gin.Context, cu *user.User) (*user.Stats, error) {
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
-	switch s := stats.Fetched(c); {
+	switch s := user.StatsFetched(c); {
 	case s == nil:
 		return nil, sn.NewVError("missing stats for player.")
 	case !g.IsCurrentPlayer(cu):

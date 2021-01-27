@@ -5,7 +5,6 @@ import (
 	"html/template"
 
 	"github.com/SlothNinja/contest"
-	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/restful"
 	"github.com/gin-gonic/gin"
 )
@@ -16,9 +15,9 @@ func init() {
 
 type endGameScoringMap map[AreaID]int
 
-func (client Client) endGameScoring(c *gin.Context, g *Game) (contest.Contests, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+func (client *Client) endGameScoring(c *gin.Context, g *Game) ([]*contest.Contest, error) {
+	client.Log.Debugf(msgEnter)
+	defer client.Log.Debugf(msgExit)
 
 	g.Phase = EndOfTurn
 	m := make(endGameScoringMap, len(scoringIDS()))

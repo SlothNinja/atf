@@ -18,8 +18,8 @@ func init() {
 }
 
 func (g *Game) payActionCost(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var r Resource
 

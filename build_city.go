@@ -19,8 +19,8 @@ func init() {
 }
 
 func (g *Game) buildCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateBuildCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -140,8 +140,8 @@ func (e *cityPrivilegeEntry) HTML() template.HTML {
 }
 
 func (g *Game) validateBuildCity(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area
@@ -186,8 +186,8 @@ func (e *buildCityEntry) HTML() template.HTML {
 }
 
 func (g *Game) abandonCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateAbandonCity(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -215,8 +215,8 @@ func (g *Game) abandonCity(c *gin.Context, cu *user.User) (tmpl string, act game
 }
 
 func (g *Game) validateAbandonCity(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePlayerAction(cu); err != nil {
 		return

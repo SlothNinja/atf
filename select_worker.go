@@ -10,8 +10,8 @@ import (
 )
 
 func (g *Game) fromStock(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateFromStock(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -37,8 +37,8 @@ func (g *Game) validateFromStock(c *gin.Context, cu *user.User) (err error) {
 }
 
 func (g *Game) selectWorker(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateSelectWorker(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -66,8 +66,8 @@ func (g *Game) selectWorker(c *gin.Context, cu *user.User) (tmpl string, act gam
 }
 
 func (g *Game) validateSelectWorker(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area

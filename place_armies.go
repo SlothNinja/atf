@@ -18,8 +18,8 @@ func init() {
 }
 
 func (g *Game) placeArmies(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var armies int
 	if armies, err = g.validatePlaceArmies(c, cu); err != nil {
@@ -54,8 +54,8 @@ func (g *Game) placeArmies(c *gin.Context, cu *user.User) (tmpl string, act game
 }
 
 func (g *Game) validatePlaceArmies(c *gin.Context, cu *user.User) (armies int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var cp *Player
 	switch cp, armies, err = g.CurrentPlayer(), getPlacedArmies(c), g.validatePlayerAction(cu); {

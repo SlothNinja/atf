@@ -15,8 +15,8 @@ func init() {
 }
 
 func (g *Game) orderOfPlay(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = OrderOfPlay
 	g.Round = 1

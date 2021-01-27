@@ -22,10 +22,10 @@ func init() {
 	gob.Register(new(startTurnEntry))
 }
 
-func (client Client) Register(t gtype.Type, r *gin.Engine) *gin.Engine {
+func (client *Client) register(t gtype.Type) *Client {
 	gob.Register(new(Game))
 	game.Register(t, newGamer, PhaseNames, nil)
-	return client.addRoutes(t.Prefix(), r)
+	return client.addRoutes(t.Prefix())
 }
 
 var ErrMustBeGame = errors.New("Resource must have type *Game.")
@@ -272,8 +272,8 @@ func (g *Game) CurrentPlayer() *Player {
 }
 
 func (g *Game) adminSupplyTable(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	ns := struct {
 		Resources Resources `form:"resources"`
@@ -311,8 +311,8 @@ func (g *Game) anyPassed() bool {
 }
 
 func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionType, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	h := struct {
 		Title         string           `form:"title"`

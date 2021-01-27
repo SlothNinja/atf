@@ -16,8 +16,8 @@ func init() {
 type declineMap map[AreaID]Workers
 
 func (g *Game) declinePhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = Decline
 	m := make(declineMap, len(declineIDS()))

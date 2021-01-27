@@ -24,8 +24,8 @@ type armyResources struct {
 }
 
 func (g *Game) buyArmies(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	buyArmyResources, bought, err := g.validateBuyArmies(c, cu)
 	if err != nil {
@@ -51,8 +51,8 @@ func (g *Game) buyArmies(c *gin.Context, cu *user.User) (tmpl string, act game.A
 }
 
 func (g *Game) validateBuyArmies(c *gin.Context, cu *user.User) (resources Resources, bought int, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validatePlayerAction(cu); err != nil {
 		return

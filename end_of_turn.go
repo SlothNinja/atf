@@ -6,8 +6,8 @@ import (
 )
 
 func (g *Game) endOfTurn(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = EndOfTurn
 	g.returnArmies(c)
@@ -17,8 +17,8 @@ func (g *Game) endOfTurn(c *gin.Context) {
 }
 
 func (g *Game) returnArmies(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, a := range g.Areas {
 		a.Armies = 0
@@ -31,8 +31,8 @@ func (g *Game) returnArmies(c *gin.Context) {
 }
 
 func (g *Game) returnWorkers(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, p := range g.Players() {
 		p.WorkerSupply += p.Worker
@@ -41,8 +41,8 @@ func (g *Game) returnWorkers(c *gin.Context) {
 }
 
 func (g *Game) resetPassboxes(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, p := range g.Players() {
 		for r, count := range p.PassedResources {
@@ -53,8 +53,8 @@ func (g *Game) resetPassboxes(c *gin.Context) {
 }
 
 func (g *Game) resetArmyBoxes(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, p := range g.Players() {
 		if emp := p.empire(); emp != nil {

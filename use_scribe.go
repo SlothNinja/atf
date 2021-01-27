@@ -17,8 +17,8 @@ func init() {
 }
 
 func (g *Game) useScribe(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateUseScribe(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -37,8 +37,8 @@ func (g *Game) useScribe(c *gin.Context, cu *user.User) (tmpl string, act game.A
 }
 
 func (g *Game) validateUseScribe(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area

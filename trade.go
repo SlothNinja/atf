@@ -19,8 +19,8 @@ func init() {
 }
 
 func (g *Game) tradeResource(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		gave, received Resources
@@ -177,8 +177,8 @@ func (e *tradeEntry) HTML() template.HTML {
 }
 
 func (g *Game) makeTool(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateMakeTool(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None
@@ -204,8 +204,8 @@ func (g *Game) makeTool(c *gin.Context, cu *user.User) (tmpl string, act game.Ac
 }
 
 func (g *Game) validateMakeTool(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var (
 		a  *Area

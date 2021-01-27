@@ -10,8 +10,8 @@ import (
 )
 
 func (g *Game) toStock(c *gin.Context, cu *user.User) (tmpl string, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateToStock(c, cu); err != nil {
 		tmpl = "atf/select_worker_update"
@@ -33,8 +33,8 @@ func (g *Game) toStock(c *gin.Context, cu *user.User) (tmpl string, err error) {
 }
 
 func (g *Game) validateToStock(c *gin.Context, cu *user.User) (err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	switch err = g.validatePlayerAction(cu); {
 	case err != nil:

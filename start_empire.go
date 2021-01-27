@@ -18,8 +18,8 @@ func init() {
 }
 
 func (g *Game) startEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	armies, babylonArmies, empire, err := g.validateStartEmpire(c, cu)
 	if err != nil {
@@ -48,8 +48,8 @@ func (g *Game) startEmpire(c *gin.Context, cu *user.User) (tmpl string, act game
 }
 
 func (g *Game) validateStartEmpire(c *gin.Context, cu *user.User) (armies int, priv int, empire *Empire, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	a := g.SelectedArea()
 	if a == nil {
@@ -132,8 +132,8 @@ func (e *babylonPrivilegeEntry) HTML() template.HTML {
 }
 
 func (g *Game) cancelStartEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if cp := g.CurrentPlayer(); !g.IsCurrentPlayer(cu) {
 		tmpl, act, err = "atf/flash_notice", game.None, sn.NewVError("Only the current player may perform this action.")
@@ -145,8 +145,8 @@ func (g *Game) cancelStartEmpire(c *gin.Context, cu *user.User) (tmpl string, ac
 }
 
 func (g *Game) confirmStartEmpire(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	if err = g.validateConfirmStartEmpire(c, cu); err != nil {
 		tmpl, act = "atf/flash_notice", game.None

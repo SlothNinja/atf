@@ -17,8 +17,8 @@ func init() {
 }
 
 func (g *Game) collectGrainPhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = CollectGrain
 	for _, p := range g.Players() {
@@ -94,8 +94,8 @@ func (e *collectGrainEntry) HTML() template.HTML {
 }
 
 func (g *Game) collectTextilePhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = CollectTextile
 	for _, p := range g.Players() {
@@ -174,8 +174,8 @@ func (e *collectTextileEntry) HTML() template.HTML {
 }
 
 func (g *Game) collectWorkersPhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = CollectWorkers
 	for _, p := range g.Players() {
@@ -223,8 +223,8 @@ func min(i, j int) int {
 	return j
 }
 func (g *Game) resetScribesPhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, p := range g.Players() {
 		usedScribes := g.Areas[UsedScribes]
@@ -236,8 +236,8 @@ func (g *Game) resetScribesPhase(c *gin.Context) {
 }
 
 func (g *Game) resetToolMakersPhase(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	for _, p := range g.Players() {
 		usedToolMakers := g.Areas[UsedToolMakers]

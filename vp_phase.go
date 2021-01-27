@@ -26,8 +26,8 @@ type scoreEmpireRecord struct {
 }
 
 func (g *Game) scoreEmpires(c *gin.Context) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.beginningOfPhaseReset()
 	g.Phase = ScoreEmpire
@@ -122,8 +122,8 @@ func (e *scoreEmpiresEntry) HTML() template.HTML {
 }
 
 func (g *Game) expandCityPhase(c *gin.Context, cu *user.User) (completed bool) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	g.Phase = ExpandCity
 	g.Round = 1
@@ -141,8 +141,8 @@ func (g *Game) expandCityPhase(c *gin.Context, cu *user.User) (completed bool) {
 }
 
 func (g *Game) expandCity(c *gin.Context, cu *user.User) (tmpl string, act game.ActionType, err error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	var rs Resources
 
@@ -187,8 +187,8 @@ func (g *Game) expandCity(c *gin.Context, cu *user.User) (tmpl string, act game.
 }
 
 func (g *Game) validateExpandCity(c *gin.Context, cu *user.User) (Resources, error) {
-	log.Debugf("Entering")
-	defer log.Debugf("Exiting")
+	log.Debugf(msgEnter)
+	defer log.Debugf(msgExit)
 
 	rs, err := getResourcesFrom(c)
 	if err != nil {
