@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"html/template"
+	"math/rand"
 	"time"
 
 	"github.com/SlothNinja/color"
@@ -93,8 +94,8 @@ func (g *Game) Start(c *gin.Context) error {
 }
 
 func (g *Game) addNewPlayers() {
-	for _, u := range g.Users {
-		g.addNewPlayer(u)
+	for _ = range g.UserIDS {
+		g.addNewPlayer()
 	}
 }
 
@@ -361,4 +362,16 @@ func (g *Game) adminHeader(c *gin.Context, cu *user.User) (string, game.ActionTy
 	g.Status = h.Status
 	game.WithAdmin(c, true)
 	return "", game.Save, nil
+}
+
+func (g *Game) RandomTurnOrder() {
+	rand.Shuffle(len(g.Playerers), func(i, j int) {
+		g.Playerers[i], g.Playerers[j] = g.Playerers[j], g.Playerers[i]
+	})
+	g.SetCurrentPlayerers(g.Playerers[0])
+
+	g.OrderIDS = make(game.UserIndices, len(g.Playerers))
+	for i, p := range g.Playerers {
+		g.OrderIDS[i] = p.ID()
+	}
 }

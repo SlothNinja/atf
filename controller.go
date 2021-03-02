@@ -721,21 +721,21 @@ func (g *Game) updateHeader() {
 	default:
 		g.Progress = fmt.Sprintf("<div>Turn: %d | Round: %d</div><div>Phase: %s</div>", g.Turn, g.Round, g.PhaseName())
 	}
-	if u := g.Creator; u != nil {
-		g.CreatorSID = user.GenID(u.GoogleID)
-		g.CreatorName = u.Name
-	}
+	// if u := g.Creator; u != nil {
+	// 	g.CreatorSID = user.GenID(u.GoogleID)
+	// 	g.CreatorName = u.Name
+	// }
 
-	if l := len(g.Users); l > 0 {
-		g.UserSIDS = make([]string, l)
-		g.UserNames = make([]string, l)
-		g.UserEmails = make([]string, l)
-		for i, u := range g.Users {
-			g.UserSIDS[i] = user.GenID(u.GoogleID)
-			g.UserNames[i] = u.Name
-			g.UserEmails[i] = u.Email
-		}
-	}
+	// if l := len(g.Users); l > 0 {
+	// 	g.UserSIDS = make([]string, l)
+	// 	g.UserNames = make([]string, l)
+	// 	g.UserEmails = make([]string, l)
+	// 	for i, u := range g.Users {
+	// 		g.UserSIDS[i] = user.GenID(u.GoogleID)
+	// 		g.UserNames[i] = u.Name
+	// 		g.UserEmails[i] = u.Email
+	// 	}
+	// }
 
 }
 
