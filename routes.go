@@ -1,16 +1,12 @@
 package atf
 
 import (
-	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/game"
-	"github.com/SlothNinja/log"
 	"github.com/SlothNinja/mlog"
 	"github.com/SlothNinja/rating"
 	"github.com/SlothNinja/sn"
 	gtype "github.com/SlothNinja/type"
 	"github.com/SlothNinja/user"
-	"github.com/gin-gonic/gin"
-	"github.com/patrickmn/go-cache"
 )
 
 type Client struct {
@@ -21,12 +17,11 @@ type Client struct {
 	Rating *rating.Client
 }
 
-func NewClient(dClient *datastore.Client, uClient *user.Client, gClient *game.Client, mClient *mlog.Client,
-	rClient *rating.Client, logger *log.Logger, cache *cache.Cache, router *gin.Engine, t gtype.Type) *Client {
+func NewClient(snClient *sn.Client, uClient *user.Client, gClient *game.Client, rClient *rating.Client, t gtype.Type) *Client {
 	client := &Client{
-		Client: sn.NewClient(dClient, logger, cache, router),
+		Client: snClient,
 		User:   uClient,
-		MLog:   mClient,
+		MLog:   mlog.NewClient(snClient, uClient),
 		Game:   gClient,
 		Rating: rClient,
 	}
